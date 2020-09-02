@@ -1,5 +1,13 @@
 **Task manager**
 
+**How does it deploy?**
+
+ - run in terminal `git clone git@github.com:zgfif/task_manager.git`
+ - create file `config/database.yml` that is based on `config/database.yml.example` with corresponding own *db_username* and *db_password*
+ - run `bin/rake db:reset`
+
+**What does it should do?**
+
 I'm a person who passionate about my own productivity. I want to
 manage my tasks and projects more effectively. I need a simple tool that
 supports me in controlling my task-flow
