@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-class Project < ApplicationRecord
+class Task < ApplicationRecord
   validates :name, presence: true, length: { minimum: 3 }
 
-  has_many :tasks
+  belongs_to :project
 end
