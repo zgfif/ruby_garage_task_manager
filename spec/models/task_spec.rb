@@ -50,5 +50,9 @@ RSpec.describe Task, type: :model do
     it 'correct numeric status' do
       expect { subject.status = 1 }.to_not raise_error
     end
+
+    it 'has correct default status' do
+      expect(subject.status).to eq('undone')
+    end
   end
 end
