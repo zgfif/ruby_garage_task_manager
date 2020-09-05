@@ -45,7 +45,7 @@
      display: flex;
      width: 100%;
      height: 70px;
-     background-color: #4394E6;
+     background-color: #4774b3;
  }
 
  .window-add {
@@ -169,7 +169,7 @@
      border: none;
      font-weight: bold;
      color: white;
-     background-color: #4394E6;
+     background-color: #5d81b2;
      height: 40px;
      width: 180px;
  }
@@ -185,7 +185,7 @@
      outline: none;
      border: none;
      color: white;
-     background-color: #00b386;
+     background-color: #71a88a;
  }
 
  .task-item {
