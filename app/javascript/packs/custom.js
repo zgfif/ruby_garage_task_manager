@@ -56,7 +56,7 @@ window.addEventListener('DOMContentLoaded', () => {
                                    <input id="add-task-input" type="text" placeholder="Start typing here to create a task...">
                                </div>
                                <div class="add-task-button">
-                                   <button id="btn-add-task">Add Task</button></dib>
+                                   <button id="btn-add-task">Add Task</button>
                                </div>
                            </div>
                            <div class="window-task-list"></div>`;
