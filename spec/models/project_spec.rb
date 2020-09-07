@@ -4,6 +4,9 @@ require 'rails_helper'
 
 RSpec.describe Project, type: :model do
   context 'project attributes' do
+    let(:user) { build(:user) }
+    let(:subject) { user.projects.new }
+
     it 'should be invalid without any attributes' do
       expect(subject).to_not be_valid
     end

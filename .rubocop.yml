@@ -6,6 +6,8 @@ AllCops:
     - 'db/schema.rb'
     - 'node_modules/**/*'
     - 'bin/*'
+    - 'config/environments/*'
+    - 'config/initializers/*'
 
 Style/Documentation:
   Enabled: false

@@ -12,22 +12,18 @@ RSpec.describe Task, type: :model do
   end
 
   context 'task attributes' do
-    let(:task_attributes) { { status: 0, deadline: '2020-09-31', priority: 2 } }
-    let(:project) { Project.create(name: 'Home work') }
-    let(:task) { project.tasks.new(task_attributes) }
-
     it 'should be invalid without name' do
-      task.name = ''
+      task = build(:task, name: '')
       expect(task).to_not be_valid
     end
 
     it 'should be invalid with too name less than 3 symbols' do
-      task.name = 'my'
+      task = build(:task, name: 'my')
       expect(task).to_not be_valid
     end
 
     it 'should be valid' do
-      task.name = 'first task'
+      task = create(:task)
       expect(task).to be_valid
     end
   end
