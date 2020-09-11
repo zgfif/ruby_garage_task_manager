@@ -1,5 +1,5 @@
 class ProjectsController < ApplicationController
-  before_action :project_params, only: :create
+  # before_action :project_params, only: %i[create update]
 
   def index
       @projects = present_user.projects
@@ -25,6 +25,18 @@ class ProjectsController < ApplicationController
       render json: @project.errors , status: :accepted
     end
   end
+
+  def update
+    # render json: project_params
+    @project = Project.find(params[:id])
+
+    if @project.update(project_params)
+      render json: @project, status: :ok
+    else
+      render json: @project.errors, status: :conflict
+    end
+  end
+
 
   private
 

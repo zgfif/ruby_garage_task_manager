@@ -4,6 +4,11 @@ window.addEventListener('DOMContentLoaded', () => {
   const workspace = document.querySelector('.workspace'), // windows area
   newWindowButton = document.querySelector('#btn-add-todo'); // button to add new window
 
+  loadProjects();
+
+  listenNewListButton(newWindowButton);
+
+
   class TodoWindow {
       constructor(targetPlace, listName, windowId) {
         this.targetPlace = targetPlace;
@@ -109,12 +114,12 @@ window.addEventListener('DOMContentLoaded', () => {
           editIcon.addEventListener('click', () => {
             const newTodoListName = prompt('Enter the new name of list', todoListTitleNode.textContent);
             if (newTodoListName && newTodoListName != '') {
-              todoListTitleNode.textContent = newTodoListName;
+              updateProject(this.newWindow.id, newTodoListName, todoListTitleNode);
+              // todoListTitleNode.textContent = newTodoListName;
             }
           });
       }
    }
-
 
   class Task {
     constructor(tasksArea, taskName) {
@@ -186,16 +191,16 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 
   // sets the listener that creates TODO list window on click the 'Add TODO list' button
-  newWindowButton.addEventListener('click', () => {
+  function listenNewListButton(button) {
+    button.addEventListener('click', () => {
 
-    const listName = prompt('Enter the name of list');
+      const listName = prompt('Enter the name of list');
 
-    if (listName && listName != '') {
-      createProject(workspace, listName); // saves new projects to DB and returns project_id
-    }
-  });
-
-  loadProjects();
+      if(listName && listName != '') {
+        createProject(workspace, listName); // saves new projects to DB and returns project_id
+       }
+    });
+  }
 
   // loads existing projects related to the existing user from DB
   function loadProjects() {
@@ -228,8 +233,8 @@ window.addEventListener('DOMContentLoaded', () => {
         const response = request.response;
 
         const objResponse = JSON.parse(response);
-        if (request.status == 201) {
 
+        if (request.status == 201) {
           const newWindow = new TodoWindow(workspace, projectName, objResponse.id);
           newWindow.populateNewWindow();
           newWindow.addToWorkSpace();
@@ -242,13 +247,30 @@ window.addEventListener('DOMContentLoaded', () => {
 
   // deletes an existing project after click on 'trash icon and ok in alert'
   function deleteProject(projectId) {
-    const request = new XMLHttpRequest();
-    request.open('DELETE', `/projects/${projectId}`);
-    request.send();
+    const xhr = new XMLHttpRequest();
+    xhr.open('DELETE', `/projects/${projectId}`);
+    xhr.send();
 
-    request.addEventListener('load', () => {
-      console.log(request.response);
+    xhr.addEventListener('load', () => {
+      console.log(xhr.response);
     });
+  }
 
+  // update the name of existing project
+  function updateProject(projectId, projectNewName, titleNode) {
+    const xhr = new XMLHttpRequest();
+    xhr.open('PATCH',  `/projects/${projectId}`);
+    xhr.setRequestHeader('Content-Type', 'application/json', 'charset=utf-8');
+    const project = { project: { name: projectNewName } };
+    xhr.send(JSON.stringify(project));
+
+    xhr.addEventListener('load', () => {
+       const result = JSON.parse(xhr.response);
+       if(xhr.status == 200) {
+         titleNode.textContent = projectNewName;
+       } else {
+         alert('Error! name: ' + result.name);
+       }
+    });
   }
 });
