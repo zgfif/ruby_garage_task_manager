@@ -1,4 +1,6 @@
 class ProjectsController < ApplicationController
+  rescue_from ActiveRecord::RecordNotFound, with: :handle_record_not_found
+
   def index
       @projects = present_user.projects
       render json: @projects, status: :ok
@@ -18,7 +20,7 @@ class ProjectsController < ApplicationController
     if project.destroy
       render json: project, status: :no_content
     else
-      render json: project.errors , status: :accepted
+      render json: project.errors, status: :accepted
     end
   end
 
@@ -34,10 +36,16 @@ class ProjectsController < ApplicationController
   private
 
   def project
-    @project = Project.find(params[:id])
+    @project ||= Project.find(params[:id])
+
+
   end
 
-   def project_params
+  def handle_record_not_found
+    render json: {}, status: :accepted
+  end
+
+  def project_params
      params.require(:project).permit(:name)
-   end
+  end
 end
