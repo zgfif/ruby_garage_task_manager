@@ -2,6 +2,8 @@ require 'rails_helper'
 
 RSpec.describe 'Projects', type: :request do
   let!(:project) { create(:project) }
+  let!(:name_error) { 'is too short (minimum is 3 characters)' }
+  let!(:project_params) { { project: { name: '' } } }
 
   it 'should return all related to first user projects' do
     get '/projects'
@@ -11,39 +13,41 @@ RSpec.describe 'Projects', type: :request do
     expect(response.status).to eq(200)
   end
 
+  context 'creation' do
+    it 'with correct project name' do
+      project_params[:project][:name] = 'the second project'
+      post '/projects', params: project_params
 
-  it 'should create a new project' do
-    new_project_hash = { project: { name: 'Second Project' } }
-    post '/projects', params: new_project_hash
+      expect(response_body['name']).to eq(project_params[:project][:name])
+      expect(response.status).to eq(201)
+    end
 
-    expect(response_body['name']).to eq('Second Project')
-    expect(response.status).to eq(201)
+    it 'with incorrect(too short) project name' do
+      project_params[:project][:name] = 'th'
+      post '/projects', params: project_params
+
+      expect(response_body['name'][0]).to eq(name_error)
+      expect(response.status).to eq(409)
+    end
   end
 
-  it 'should NOT create a new project' do
-    new_project_hash = { project: { name: 'f' } }
-    post '/projects', params: new_project_hash
+  context 'updating' do
+    it 'with correct project name' do
+      project_params[:project][:name] = 'altered project'
+      patch "/projects/#{project.id}", params: project_params
 
-    expect(response_body['name'][0]).to eq('is too short (minimum is 3 characters)')
-    expect(response.status).to eq(409)
+      expect(response_body['name']).to eq(project_params[:project][:name])
+      expect(response.status).to eq(200)
+    end
+
+    it 'with incorrect(too short) project name' do
+      project_params[:project][:name] = 'al'
+      patch "/projects/#{project.id}", params: project_params
+
+      expect(response_body['name'][0]).to eq(name_error)
+      expect(response.status).to eq(409)
+    end
   end
-
-  it 'should update existing project' do
-    update_project_hash = { project: { name: 'altered Project' } }
-    patch "/projects/#{project.id}", params: update_project_hash
-
-    expect(response_body['name']).to eq('altered Project')
-    expect(response.status).to eq(200)
-  end
-
-  it 'should NOT create a new project' do
-    update_project_hash = { project: { name: 'f' } }
-    patch "/projects/#{project.id}", params: update_project_hash
-
-    expect(response_body['name'][0]).to eq('is too short (minimum is 3 characters)')
-    expect(response.status).to eq(409)
-  end
-
 
   it 'should destroy existing project' do
     delete "/projects/#{project.id}"
@@ -53,7 +57,7 @@ RSpec.describe 'Projects', type: :request do
   end
 
   it 'should NOT destroy existing project' do
-    delete "/projects/invalid_id"
+    delete '/projects/invalid_id'
 
     expect(Project.count).to eq(1)
     expect(response.status).to eq(202)
