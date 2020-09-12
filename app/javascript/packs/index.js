@@ -115,7 +115,6 @@ window.addEventListener('DOMContentLoaded', () => {
             const newTodoListName = prompt('Enter the new name of list', todoListTitleNode.textContent);
             if (newTodoListName && newTodoListName != '') {
               updateProject(this.newWindow.id, newTodoListName, todoListTitleNode);
-              // todoListTitleNode.textContent = newTodoListName;
             }
           });
       }
@@ -202,6 +201,8 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+
+  // CRUD functions for Project
   // loads existing projects related to the existing user from DB
   function loadProjects() {
     const request = new XMLHttpRequest();
