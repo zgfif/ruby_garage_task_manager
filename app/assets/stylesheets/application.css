@@ -94,6 +94,10 @@
      background-color: #008060;
  }
 
+ #btn-add-todo:hover {
+   background-color: blue;
+ }
+
  .task-item:hover {
      border-bottom-left-radius: 20px;
      border-bottom-right-radius: 20px;

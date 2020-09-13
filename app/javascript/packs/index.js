@@ -4,12 +4,18 @@ window.addEventListener('DOMContentLoaded', () => {
   const workspace = document.querySelector('.workspace'), // windows area
   newWindowButton = document.querySelector('#btn-add-todo'); // button to add new window
 
+  loadProjects();
+
+  listenNewListButton(newWindowButton);
+
+
   class TodoWindow {
-      constructor(targetPlace, listName) {
-        this.listName = listName;
+      constructor(targetPlace, listName, windowId) {
         this.targetPlace = targetPlace;
+        this.listName = listName;
         this.newWindow = document.createElement('div');
-        this.newWindow.classList.add('window')
+        this.newWindow.classList.add('window');
+        this.newWindow.id = windowId;
       }
 
       addToWorkSpace() {
@@ -62,10 +68,13 @@ window.addEventListener('DOMContentLoaded', () => {
 
 
       setCommonWindowListeners() {
-           this.setEditTodoListListener(this.newWindow);
+           this.setEditTodoListListener();
            this.setCloseWindowListener();
            this.setAddTaskListener();
       }
+
+      // Below shown listeners that used only indirectly
+      // (in setCommonWindowListeners() function)
 
       // sets the listener that removes the TODO list window on click the 'trash' icon
       setCloseWindowListener() {
@@ -74,6 +83,7 @@ window.addEventListener('DOMContentLoaded', () => {
         trash.addEventListener('click', () => {
             const really = confirm('Are you sure want to remove this TODO list?');
             if(really) {
+              deleteProject(this.newWindow.id);
               this.newWindow.remove();
             }
         });
@@ -104,12 +114,11 @@ window.addEventListener('DOMContentLoaded', () => {
           editIcon.addEventListener('click', () => {
             const newTodoListName = prompt('Enter the new name of list', todoListTitleNode.textContent);
             if (newTodoListName && newTodoListName != '') {
-              todoListTitleNode.textContent = newTodoListName;
+              updateProject(this.newWindow.id, newTodoListName, todoListTitleNode);
             }
           });
       }
    }
-
 
   class Task {
     constructor(tasksArea, taskName) {
@@ -181,18 +190,88 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 
   // sets the listener that creates TODO list window on click the 'Add TODO list' button
-  newWindowButton.addEventListener('click', () => {
+  function listenNewListButton(button) {
+    button.addEventListener('click', () => {
 
-    const listName = prompt('Enter the name of list');
+      const listName = prompt('Enter the name of list');
 
-    if (listName && listName != '') {
-      const newWindow = new TodoWindow(workspace, listName);
-
-      newWindow.populateNewWindow(listName);
-      newWindow.addToWorkSpace();
-      newWindow.setCommonWindowListeners();
-    }
-  });
+      if(listName && listName != '') {
+        createProject(workspace, listName); // saves new projects to DB and returns project_id
+       }
+    });
+  }
 
 
+  // CRUD functions for Project
+  // loads existing projects related to the existing user from DB
+  function loadProjects() {
+    const request = new XMLHttpRequest();
+    request.open('GET', '/projects');
+    request.setRequestHeader('Content-type', 'application/json', 'charset=utf-8');
+    request.send();
+
+    request.addEventListener('load', () => {
+          const projects = JSON.parse(request.response);
+
+          projects.forEach(item => {
+             const projectWindow = new TodoWindow(workspace, item.name, item.id);
+              projectWindow.populateNewWindow();
+              projectWindow.addToWorkSpace();
+              projectWindow.setCommonWindowListeners();
+          });
+    });
+  }
+
+  // creates a new project after entering the new project name
+  function createProject(workspace, projectName) {
+    const request = new XMLHttpRequest();
+    request.open('POST', '/projects');
+    request.setRequestHeader('Content-Type', 'application/json', 'charset=utf-8');
+    const project = { project: { name: projectName } };
+    request.send(JSON.stringify(project));
+
+    request.addEventListener('load', () => {
+        const response = request.response;
+
+        const objResponse = JSON.parse(response);
+
+        if (request.status == 201) {
+          const newWindow = new TodoWindow(workspace, projectName, objResponse.id);
+          newWindow.populateNewWindow();
+          newWindow.addToWorkSpace();
+          newWindow.setCommonWindowListeners();
+        } else {
+          alert('Error! name: ' + objResponse.name);
+        }
+    });
+  }
+
+  // deletes an existing project after click on 'trash icon and ok in alert'
+  function deleteProject(projectId) {
+    const xhr = new XMLHttpRequest();
+    xhr.open('DELETE', `/projects/${projectId}`);
+    xhr.send();
+
+    xhr.addEventListener('load', () => {
+      console.log(xhr.response);
+    });
+  }
+
+  // update the name of existing project
+  function updateProject(projectId, projectNewName, titleNode) {
+    const xhr = new XMLHttpRequest();
+    xhr.open('PATCH',  `/projects/${projectId}`);
+    xhr.setRequestHeader('Content-Type', 'application/json', 'charset=utf-8');
+    const project = { project: { name: projectNewName } };
+    xhr.send(JSON.stringify(project));
+
+    xhr.addEventListener('load', () => {
+       const result = JSON.parse(xhr.response);
+       if(xhr.status == 200) {
+         titleNode.textContent = projectNewName;
+       } else {
+         alert('Error! name: ' + result.name);
+       }
+    });
+  }
 });
