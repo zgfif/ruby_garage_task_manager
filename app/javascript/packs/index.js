@@ -4,10 +4,7 @@ window.addEventListener('DOMContentLoaded', () => {
   const workspace = document.querySelector('.workspace'), // windows area
   newWindowButton = document.querySelector('#btn-add-todo'); // button to add new window
 
-  loadProjects();
-
   listenNewListButton(newWindowButton);
-
 
   class TodoWindow {
       constructor(targetPlace, listName, windowId) {
@@ -83,8 +80,10 @@ window.addEventListener('DOMContentLoaded', () => {
         trash.addEventListener('click', () => {
             const really = confirm('Are you sure want to remove this TODO list?');
             if(really) {
-              deleteProject(this.newWindow.id);
-              this.newWindow.remove();
+              // deletes an existing project after click on 'trash icon and ok in alert'
+              const deleteRequest = new ProjectRequest('DELETE', `/projects/${this.newWindow.id}`);
+              deleteRequest.send();
+              deleteRequest.handleDestroying(this.newWindow);
             }
         });
       }
@@ -114,7 +113,12 @@ window.addEventListener('DOMContentLoaded', () => {
           editIcon.addEventListener('click', () => {
             const newTodoListName = prompt('Enter the new name of list', todoListTitleNode.textContent);
             if (newTodoListName && newTodoListName != '') {
-              updateProject(this.newWindow.id, newTodoListName, todoListTitleNode);
+              // update the name of existing project
+              const updateRequest = new ProjectRequest('PATCH', `/projects/${this.newWindow.id}`);
+
+              const projectData = { project: { name: newTodoListName } };
+              updateRequest.send(projectData);
+              updateRequest.handleEditing(this.newWindow.id, newTodoListName, todoListTitleNode);
             }
           });
       }
@@ -196,82 +200,79 @@ window.addEventListener('DOMContentLoaded', () => {
       const listName = prompt('Enter the name of list');
 
       if(listName && listName != '') {
-        createProject(workspace, listName); // saves new projects to DB and returns project_id
+        // creates a new project after entering the new project name
+        const newProject = new ProjectRequest('POST', '/projects/' );
+        const projectData = { project: { name: listName } };
+        newProject.send(projectData);
+        newProject.handleCreation(workspace, listName);
        }
     });
   }
 
 
   // CRUD functions for Project
-  // loads existing projects related to the existing user from DB
-  function loadProjects() {
-    const request = new XMLHttpRequest();
-    request.open('GET', '/projects');
-    request.setRequestHeader('Content-type', 'application/json', 'charset=utf-8');
-    request.send();
+  class ProjectRequest {
+    constructor(method, path) {
+       this.xhr = new XMLHttpRequest();
+       this.xhr.open(method, path);
+       this.xhr.setRequestHeader('Content-type', 'application/json', 'charset=utf-8');
+    }
 
-    request.addEventListener('load', () => {
-          const projects = JSON.parse(request.response);
+    send(data = null) {
+      if (data != null) { data = JSON.stringify(data); }
+      this.xhr.send(data);
+    }
 
-          projects.forEach(item => {
-             const projectWindow = new TodoWindow(workspace, item.name, item.id);
-              projectWindow.populateNewWindow();
-              projectWindow.addToWorkSpace();
-              projectWindow.setCommonWindowListeners();
-          });
-    });
-  }
+    loadProjects() {
+       this.xhr.addEventListener('load', () => {
+         const projects = JSON.parse(this.xhr.response);
+         projects.forEach(item => {
+           const projectWindow = new TodoWindow(workspace, item.name, item.id);
+           projectWindow.populateNewWindow();
+           projectWindow.addToWorkSpace();
+           projectWindow.setCommonWindowListeners();
+         });
+      });
+    }
 
-  // creates a new project after entering the new project name
-  function createProject(workspace, projectName) {
-    const request = new XMLHttpRequest();
-    request.open('POST', '/projects');
-    request.setRequestHeader('Content-Type', 'application/json', 'charset=utf-8');
-    const project = { project: { name: projectName } };
-    request.send(JSON.stringify(project));
+    handleCreation(workspace, projectName) {
+      this.workspace = workspace;
+      this.projectName = projectName;
 
-    request.addEventListener('load', () => {
-        const response = request.response;
+      this.xhr.addEventListener('load', () => {
+        const response = JSON.parse(this.xhr.response);
 
-        const objResponse = JSON.parse(response);
-
-        if (request.status == 201) {
-          const newWindow = new TodoWindow(workspace, projectName, objResponse.id);
+        if (this.xhr.status == 201) {
+          const newWindow = new TodoWindow(workspace, projectName, response.id);
           newWindow.populateNewWindow();
           newWindow.addToWorkSpace();
           newWindow.setCommonWindowListeners();
         } else {
-          alert('Error! name: ' + objResponse.name);
+          alert('Error! name: ' + response.name);
         }
-    });
+      });
+    }
+
+    handleEditing(projectId, projectNewName, titleNode) {
+      this.xhr.addEventListener('load', () => {
+         const result = JSON.parse(this.xhr.response);
+         if(this.xhr.status == 200) {
+           titleNode.textContent = projectNewName;
+         } else {
+           alert('Error! name: ' + result.name);
+         }
+      });
+    }
+
+    handleDestroying(projectNode) {
+      this.xhr.addEventListener('load', () => {
+        if(this.xhr.status == 204) { projectNode.remove(); }
+      });
+    }
   }
 
-  // deletes an existing project after click on 'trash icon and ok in alert'
-  function deleteProject(projectId) {
-    const xhr = new XMLHttpRequest();
-    xhr.open('DELETE', `/projects/${projectId}`);
-    xhr.send();
-
-    xhr.addEventListener('load', () => {
-      console.log(xhr.response);
-    });
-  }
-
-  // update the name of existing project
-  function updateProject(projectId, projectNewName, titleNode) {
-    const xhr = new XMLHttpRequest();
-    xhr.open('PATCH',  `/projects/${projectId}`);
-    xhr.setRequestHeader('Content-Type', 'application/json', 'charset=utf-8');
-    const project = { project: { name: projectNewName } };
-    xhr.send(JSON.stringify(project));
-
-    xhr.addEventListener('load', () => {
-       const result = JSON.parse(xhr.response);
-       if(xhr.status == 200) {
-         titleNode.textContent = projectNewName;
-       } else {
-         alert('Error! name: ' + result.name);
-       }
-    });
-  }
+  // loads all existing projects related to the existing user from DB
+  const loadAllRequst = new ProjectRequest('GET', '/projects');
+  loadAllRequst.send();
+  loadAllRequst.loadProjects();
 });
