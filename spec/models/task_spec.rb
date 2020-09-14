@@ -3,27 +3,29 @@
 require 'rails_helper'
 
 RSpec.describe Task, type: :model do
+  let!(:user) { create(:user) }
+  let!(:project) { create(:project, user: user) }
+
   context 'no project' do
     it 'should be invalid without related project' do
-      task = Task.new(name: 'my task', status: 0,  deadline: '2020-09-31',
-                      priority: 1)
+      task = build(:task, name: 'eat ice cream')
       expect(task).to_not be_valid
     end
   end
 
   context 'task attributes' do
     it 'should be invalid without name' do
-      task = build(:task, name: '')
+      task = build(:task, project: project, name: '')
       expect(task).to_not be_valid
     end
 
     it 'should be invalid with too name less than 3 symbols' do
-      task = build(:task, name: 'my')
+      task = build(:task, project: project, name: 'my')
       expect(task).to_not be_valid
     end
 
     it 'should be valid' do
-      task = create(:task)
+      task = build(:task, project: project)
       expect(task).to be_valid
     end
   end

@@ -1,7 +1,10 @@
+# frozen_string_literal: true
+
 require 'rails_helper'
 
 RSpec.describe 'Projects', type: :request do
-  let!(:project) { create(:project) }
+  let!(:user) { create(:user) }
+  let!(:project) { create(:project, user: user) }
   let!(:name_error) { 'is too short (minimum is 3 characters)' }
   let!(:project_params) { { project: { name: '' } } }
 
