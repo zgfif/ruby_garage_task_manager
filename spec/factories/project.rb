@@ -2,7 +2,8 @@
 
 FactoryBot.define do
   factory :project do
-    name { 'My project' }
-    user
+    sequence :name do |n|
+      "Project_#{n}"
+    end
   end
 end

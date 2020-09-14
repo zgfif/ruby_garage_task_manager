@@ -1,9 +1,10 @@
-class ProjectsController < ApplicationController
-  rescue_from ActiveRecord::RecordNotFound, with: :handle_record_not_found
+# frozen_string_literal: true
 
+class ProjectsController < ApplicationController
   def index
-      @projects = present_user.projects
-      render json: @projects, status: :ok
+    @projects = present_user.projects
+
+    render json: @projects, status: :ok
   end
 
   def create
@@ -32,20 +33,13 @@ class ProjectsController < ApplicationController
     end
   end
 
-
   private
 
   def project
     @project ||= Project.find(params[:id])
-
-
-  end
-
-  def handle_record_not_found
-    render json: {}, status: :accepted
   end
 
   def project_params
-     params.require(:project).permit(:name)
+    params.require(:project).permit(:name)
   end
 end
