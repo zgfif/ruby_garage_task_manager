@@ -226,11 +226,18 @@ window.addEventListener('DOMContentLoaded', () => {
     loadProjects() {
        this.xhr.addEventListener('load', () => {
          const projects = JSON.parse(this.xhr.response);
-         projects.forEach(item => {
-           const projectWindow = new TodoWindow(workspace, item.name, item.id);
+         projects.forEach(project => {
+           const projectWindow = new TodoWindow(workspace, project.name, project.id);
            projectWindow.populateNewWindow();
            projectWindow.addToWorkSpace();
            projectWindow.setCommonWindowListeners();
+
+           // load all tasks related to the project
+           const targetPlace = workspace.querySelector(`#${project.id} .window-task-list`);
+
+           const tasks = new TaskRequest('GET', `/projects/${project.id}/tasks`);
+           tasks.send();
+           tasks.loadTasks(targetPlace);
          });
       });
     }
@@ -268,6 +275,33 @@ window.addEventListener('DOMContentLoaded', () => {
       this.xhr.addEventListener('load', () => {
         if(this.xhr.status == 204) { projectNode.remove(); }
       });
+    }
+  }
+
+  // CRUD functions for Task
+  class TaskRequest {
+    constructor(method, path) {
+      this.xhr = new XMLHttpRequest();
+      this.xhr.open(method, path);
+      this.xhr.setRequestHeader('Content-type', 'application/json', 'charset=utf-8');
+    }
+
+    send(data = null) {
+      if (data != null) { data = JSON.stringify(data); }
+      this.xhr.send(data);
+    }
+
+    loadTasks(targetPlace) {
+      this.xhr.addEventListener('load', () => {
+        const tasks = JSON.parse(this.xhr.response);
+        tasks.forEach(task => {
+          // render tasks items on page
+          const taskItem = new Task(targetPlace, task.name);
+          taskItem.populateNewTaskItem();
+          taskItem.addToTasksArea();
+          taskItem.setCommonTaskItemListeners();
+        });
+     });
     }
   }
 
