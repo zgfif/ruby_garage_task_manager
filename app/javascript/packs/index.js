@@ -96,11 +96,15 @@ window.addEventListener('DOMContentLoaded', () => {
 
         addTaskBtn.addEventListener('click', () => {
           if (inputTask.value) {
-            const newTask = new Task(tasksNode, inputTask.value);
-            inputTask.value = '';
-            newTask.populateNewTaskItem();
-            newTask.addToTasksArea();
-            newTask.setCommonTaskItemListeners();
+            const request = new TaskRequest('POST', `/projects/${this.newWindow.id}/tasks`);
+            request.send({ task: { name: inputTask.value } });
+            request.saveTask(tasksNode, inputTask);
+
+            // const newTask = new Task(tasksNode, inputTask.value);
+            // inputTask.value = '';
+            // newTask.populateNewTaskItem();
+            // newTask.addToTasksArea();
+            // newTask.setCommonTaskItemListeners();
           }
         });
       }
@@ -125,11 +129,13 @@ window.addEventListener('DOMContentLoaded', () => {
    }
 
   class Task {
-    constructor(tasksArea, taskName) {
-      this.taskName = taskName;
+    constructor(tasksArea, taskName, taskId) {
       this.tasksArea = tasksArea;
+      this.taskName = taskName;
       this.taskItem = document.createElement('div');
       this.taskItem.classList.add('task-item');
+      this.taskItem.id = taskId;
+
     }
 
     populateNewTaskItem() {
@@ -226,6 +232,7 @@ window.addEventListener('DOMContentLoaded', () => {
     loadProjects() {
        this.xhr.addEventListener('load', () => {
          const projects = JSON.parse(this.xhr.response);
+
          projects.forEach(project => {
            const projectWindow = new TodoWindow(workspace, project.name, project.id);
            projectWindow.populateNewWindow();
@@ -296,12 +303,28 @@ window.addEventListener('DOMContentLoaded', () => {
         const tasks = JSON.parse(this.xhr.response);
         tasks.forEach(task => {
           // render tasks items on page
-          const taskItem = new Task(targetPlace, task.name);
+          const taskItem = new Task(targetPlace, task.name, task.id);
           taskItem.populateNewTaskItem();
           taskItem.addToTasksArea();
           taskItem.setCommonTaskItemListeners();
         });
      });
+    }
+
+    saveTask(tasksNode, inputTask) {
+      this.xhr.addEventListener('load', () => {
+         const response = JSON.parse(this.xhr.response);
+         // render task item on page if the new task was saved to db
+         if(this.xhr.status == 201) {
+           const newTask = new Task(tasksNode, response.name, response.id);
+           newTask.populateNewTaskItem();
+           newTask.addToTasksArea();
+           newTask.setCommonTaskItemListeners();
+           inputTask.value = '';
+         } else {
+            alert('Error: name ' + response.name);
+         }
+      });
     }
   }
 
