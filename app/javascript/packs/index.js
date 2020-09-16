@@ -7,12 +7,12 @@ window.addEventListener('DOMContentLoaded', () => {
   listenNewListButton(newWindowButton);
 
   class TodoWindow {
-      constructor(targetPlace, listName, windowId) {
+      constructor(targetPlace, listName, projectId) {
         this.targetPlace = targetPlace;
         this.listName = listName;
         this.newWindow = document.createElement('div');
         this.newWindow.classList.add('window');
-        this.newWindow.id = windowId;
+        this.newWindow.id = `project_${projectId}`;
       }
 
       addToWorkSpace() {
@@ -81,7 +81,8 @@ window.addEventListener('DOMContentLoaded', () => {
             const really = confirm('Are you sure want to remove this TODO list?');
             if(really) {
               // deletes an existing project after click on 'trash icon and ok in alert'
-              const deleteRequest = new ProjectRequest('DELETE', `/projects/${this.newWindow.id}`);
+              const projectId = retrieveId('project', this.newWindow.id);
+              const deleteRequest = new ProjectRequest('DELETE', `/projects/${projectId}`);
               deleteRequest.send();
               deleteRequest.handleDestroying(this.newWindow);
             }
@@ -96,15 +97,10 @@ window.addEventListener('DOMContentLoaded', () => {
 
         addTaskBtn.addEventListener('click', () => {
           if (inputTask.value) {
-            const request = new TaskRequest('POST', `/projects/${this.newWindow.id}/tasks`);
+            const projectId = retrieveId('project', this.newWindow.id);
+            const request = new TaskRequest('POST', `/projects/${projectId}/tasks`);
             request.send({ task: { name: inputTask.value } });
             request.saveTask(tasksNode, inputTask);
-
-            // const newTask = new Task(tasksNode, inputTask.value);
-            // inputTask.value = '';
-            // newTask.populateNewTaskItem();
-            // newTask.addToTasksArea();
-            // newTask.setCommonTaskItemListeners();
           }
         });
       }
@@ -118,24 +114,26 @@ window.addEventListener('DOMContentLoaded', () => {
             const newTodoListName = prompt('Enter the new name of list', todoListTitleNode.textContent);
             if (newTodoListName && newTodoListName != '') {
               // update the name of existing project
-              const updateRequest = new ProjectRequest('PATCH', `/projects/${this.newWindow.id}`);
+              const projectId = retrieveId('project', this.newWindow.id);
+
+              const updateRequest = new ProjectRequest('PATCH', `/projects/${projectId}`);
 
               const projectData = { project: { name: newTodoListName } };
               updateRequest.send(projectData);
-              updateRequest.handleEditing(this.newWindow.id, newTodoListName, todoListTitleNode);
+              updateRequest.handleEditing(newTodoListName, todoListTitleNode);
             }
           });
       }
    }
 
   class Task {
-    constructor(tasksArea, taskName, taskId) {
+    constructor(tasksArea, taskName, taskId, projectId) {
       this.tasksArea = tasksArea;
       this.taskName = taskName;
       this.taskItem = document.createElement('div');
       this.taskItem.classList.add('task-item');
-      this.taskItem.id = taskId;
-
+      this.taskItem.id = `task_${taskId}`;
+      this.projectId = projectId;
     }
 
     populateNewTaskItem() {
@@ -181,7 +179,12 @@ window.addEventListener('DOMContentLoaded', () => {
 
         trashIcon.addEventListener('click', () => {
           const really = confirm(`Are you really want to remove ${taskName}?`);
-          if (really) { this.taskItem.remove(); }
+          if (really) {
+            const taskId = retrieveId('task', this.taskItem.id);
+            const request = new TaskRequest('DELETE', `/projects/${this.projectId}/tasks/${taskId}`);
+            request.send();
+            request.handleDestroying(this.taskItem);
+          }
         });
     }
 
@@ -215,7 +218,6 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-
   // CRUD functions for Project
   class ProjectRequest {
     constructor(method, path) {
@@ -240,11 +242,11 @@ window.addEventListener('DOMContentLoaded', () => {
            projectWindow.setCommonWindowListeners();
 
            // load all tasks related to the project
-           const targetPlace = workspace.querySelector(`#${project.id} .window-task-list`);
+           const targetPlace = workspace.querySelector(`#project_${project.id} .window-task-list`);
 
            const tasks = new TaskRequest('GET', `/projects/${project.id}/tasks`);
            tasks.send();
-           tasks.loadTasks(targetPlace);
+           tasks.loadTasks(targetPlace, project.id);
          });
       });
     }
@@ -267,7 +269,7 @@ window.addEventListener('DOMContentLoaded', () => {
       });
     }
 
-    handleEditing(projectId, projectNewName, titleNode) {
+    handleEditing(projectNewName, titleNode) {
       this.xhr.addEventListener('load', () => {
          const result = JSON.parse(this.xhr.response);
          if(this.xhr.status == 200) {
@@ -298,12 +300,12 @@ window.addEventListener('DOMContentLoaded', () => {
       this.xhr.send(data);
     }
 
-    loadTasks(targetPlace) {
+    loadTasks(targetPlace, projectId) {
       this.xhr.addEventListener('load', () => {
         const tasks = JSON.parse(this.xhr.response);
         tasks.forEach(task => {
           // render tasks items on page
-          const taskItem = new Task(targetPlace, task.name, task.id);
+          const taskItem = new Task(targetPlace, task.name, task.id, projectId);
           taskItem.populateNewTaskItem();
           taskItem.addToTasksArea();
           taskItem.setCommonTaskItemListeners();
@@ -326,10 +328,27 @@ window.addEventListener('DOMContentLoaded', () => {
          }
       });
     }
+
+    handleDestroying(taskItem) {
+      this.xhr.addEventListener('load', () => {
+        if(this.xhr.status == 204) {
+          taskItem.remove();
+        }
+      });
+    }
   }
 
   // loads all existing projects related to the existing user from DB
   const loadAllRequst = new ProjectRequest('GET', '/projects');
   loadAllRequst.send();
   loadAllRequst.loadProjects();
+
+
+  function convertToIdSelector(prefix, identificator) {
+    return `${prefix}_${identificator}`;
+  }
+
+  function retrieveId(prefix, selector) {
+    return selector.replace(`${prefix}_`, '');
+  }
 });
