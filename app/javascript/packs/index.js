@@ -4,8 +4,11 @@ window.addEventListener('DOMContentLoaded', () => {
   const workspace = document.querySelector('.workspace'), // windows area
   newWindowButton = document.querySelector('#btn-add-todo'); // button to add new window
 
+
+  // activates the listner to start rendering new TODO window(project)
   listenNewListButton(newWindowButton);
 
+  // the class is used to build windows(projects) and set corresponding listeners(CRUD)
   class TodoWindow {
       constructor(targetPlace, listName, projectId) {
         this.targetPlace = targetPlace;
@@ -81,7 +84,7 @@ window.addEventListener('DOMContentLoaded', () => {
             const really = confirm('Are you sure want to remove this TODO list?');
             if(really) {
               // deletes an existing project after click on 'trash icon and ok in alert'
-              const projectId = retrieveId('project', this.newWindow.id);
+              const projectId = extractId('project', this.newWindow.id);
               const deleteRequest = new ProjectRequest('DELETE', `/projects/${projectId}`);
               deleteRequest.send();
               deleteRequest.handleDestroying(this.newWindow);
@@ -97,7 +100,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
         addTaskBtn.addEventListener('click', () => {
           if (inputTask.value) {
-            const projectId = retrieveId('project', this.newWindow.id);
+            const projectId = extractId('project', this.newWindow.id);
             const request = new TaskRequest('POST', `/projects/${projectId}/tasks`);
             request.send({ task: { name: inputTask.value } });
             request.saveTask(tasksNode, inputTask);
@@ -114,7 +117,7 @@ window.addEventListener('DOMContentLoaded', () => {
             const newTodoListName = prompt('Enter the new name of list', todoListTitleNode.textContent);
             if (newTodoListName && newTodoListName != '') {
               // update the name of existing project
-              const projectId = retrieveId('project', this.newWindow.id);
+              const projectId = extractId('project', this.newWindow.id);
 
               const updateRequest = new ProjectRequest('PATCH', `/projects/${projectId}`);
 
@@ -126,6 +129,7 @@ window.addEventListener('DOMContentLoaded', () => {
       }
    }
 
+  // the class is used to build task items and set corresponding listeners(CRUD)
   class Task {
     constructor(tasksArea, taskName, taskId, projectId) {
       this.tasksArea = tasksArea;
@@ -166,7 +170,7 @@ window.addEventListener('DOMContentLoaded', () => {
     addToTasksArea() {
       this.tasksArea.append(this.taskItem);
     }
-
+    // sets listeners to interact with a task item (click on destroy and edit task)
     setCommonTaskItemListeners() {
       this.setRemoveTaskListener();
       this.setEditTaskListener();
@@ -180,15 +184,15 @@ window.addEventListener('DOMContentLoaded', () => {
         trashIcon.addEventListener('click', () => {
           const really = confirm(`Are you really want to remove ${taskName}?`);
           if (really) {
-            const taskId = retrieveId('task', this.taskItem.id);
-            const request = new TaskRequest('DELETE', `/projects/${this.projectId}/tasks/${taskId}`);
+            const taskId = extractId('task', this.taskItem.id); // example: from 'task_123' to '123'
+            const request = new TaskRequest('DELETE', `/projects/${this.projectId}/tasks/${taskId}`); // builds the request to delete certain task
             request.send();
-            request.handleDestroying(this.taskItem);
+            request.handleDestroying(this.taskItem); // removes corresponding task element on page if the task was successfully destroyed in DB
           }
         });
     }
 
-    // sets the listner that edits the task's name on click on the 'edit' icon
+    // sets the listener that edits the task's name on click on the 'edit' icon
     setEditTaskListener() {
         const editIcon = this.taskItem.querySelector('[data-edit]'),
               taskNameNode = this.taskItem.querySelector('.task-name');
@@ -196,7 +200,10 @@ window.addEventListener('DOMContentLoaded', () => {
         editIcon.addEventListener('click', () => {
           const newTaskName = prompt('You can change the name of task', taskNameNode.textContent);
           if (newTaskName && newTaskName != '') {
-            taskNameNode.textContent = newTaskName;
+            const taskId = extractId('task', this.taskItem.id); // example: from 'task_555' to '555'
+            const request = new TaskRequest('PATCH', `/projects/${this.projectId}/tasks/${taskId}`);
+            request.send({ task: { name: newTaskName} });
+            request.handleUpdating(taskNameNode, newTaskName); // updates corresponding task element on page if the task was successfully updated in DB
           }
         });
     }
@@ -336,6 +343,18 @@ window.addEventListener('DOMContentLoaded', () => {
         }
       });
     }
+
+    handleUpdating(taskNameNode, newName) {
+      this.xhr.addEventListener('load', () => {
+        const response = JSON.parse(this.xhr.response);
+
+        if(this.xhr.status == 200) {
+          taskNameNode.textContent = newName;
+        } else {
+          alert('Error: name ' + response.name);
+        }
+      });
+    }
   }
 
   // loads all existing projects related to the existing user from DB
@@ -344,11 +363,9 @@ window.addEventListener('DOMContentLoaded', () => {
   loadAllRequst.loadProjects();
 
 
-  function convertToIdSelector(prefix, identificator) {
-    return `${prefix}_${identificator}`;
-  }
-
-  function retrieveId(prefix, selector) {
+  // this function is used to extract some id from CSS seletor(id), for example,
+  // from 'project_1234' to '1234' which is used for further async requests to DB.
+  function extractId(prefix, selector) {
     return selector.replace(`${prefix}_`, '');
   }
 });
