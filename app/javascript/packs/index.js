@@ -4,15 +4,18 @@ window.addEventListener('DOMContentLoaded', () => {
   const workspace = document.querySelector('.workspace'), // windows area
   newWindowButton = document.querySelector('#btn-add-todo'); // button to add new window
 
+
+  // activates the listner to start rendering new TODO window(project)
   listenNewListButton(newWindowButton);
 
+  // the class is used to build windows(projects) and set corresponding listeners(CRUD)
   class TodoWindow {
-      constructor(targetPlace, listName, windowId) {
+      constructor(targetPlace, listName, projectId) {
         this.targetPlace = targetPlace;
         this.listName = listName;
         this.newWindow = document.createElement('div');
         this.newWindow.classList.add('window');
-        this.newWindow.id = windowId;
+        this.newWindow.id = `project_${projectId}`;
       }
 
       addToWorkSpace() {
@@ -81,7 +84,8 @@ window.addEventListener('DOMContentLoaded', () => {
             const really = confirm('Are you sure want to remove this TODO list?');
             if(really) {
               // deletes an existing project after click on 'trash icon and ok in alert'
-              const deleteRequest = new ProjectRequest('DELETE', `/projects/${this.newWindow.id}`);
+              const projectId = extractId('project', this.newWindow.id);
+              const deleteRequest = new ProjectRequest('DELETE', `/projects/${projectId}`);
               deleteRequest.send();
               deleteRequest.handleDestroying(this.newWindow);
             }
@@ -96,11 +100,10 @@ window.addEventListener('DOMContentLoaded', () => {
 
         addTaskBtn.addEventListener('click', () => {
           if (inputTask.value) {
-            const newTask = new Task(tasksNode, inputTask.value);
-            inputTask.value = '';
-            newTask.populateNewTaskItem();
-            newTask.addToTasksArea();
-            newTask.setCommonTaskItemListeners();
+            const projectId = extractId('project', this.newWindow.id);
+            const request = new TaskRequest('POST', `/projects/${projectId}/tasks`);
+            request.send({ task: { name: inputTask.value } });
+            request.saveTask(tasksNode, inputTask);
           }
         });
       }
@@ -114,22 +117,27 @@ window.addEventListener('DOMContentLoaded', () => {
             const newTodoListName = prompt('Enter the new name of list', todoListTitleNode.textContent);
             if (newTodoListName && newTodoListName != '') {
               // update the name of existing project
-              const updateRequest = new ProjectRequest('PATCH', `/projects/${this.newWindow.id}`);
+              const projectId = extractId('project', this.newWindow.id);
+
+              const updateRequest = new ProjectRequest('PATCH', `/projects/${projectId}`);
 
               const projectData = { project: { name: newTodoListName } };
               updateRequest.send(projectData);
-              updateRequest.handleEditing(this.newWindow.id, newTodoListName, todoListTitleNode);
+              updateRequest.handleEditing(newTodoListName, todoListTitleNode);
             }
           });
       }
    }
 
+  // the class is used to build task items and set corresponding listeners(CRUD)
   class Task {
-    constructor(tasksArea, taskName) {
-      this.taskName = taskName;
+    constructor(tasksArea, taskName, taskId, projectId) {
       this.tasksArea = tasksArea;
+      this.taskName = taskName;
       this.taskItem = document.createElement('div');
       this.taskItem.classList.add('task-item');
+      this.taskItem.id = `task_${taskId}`;
+      this.projectId = projectId;
     }
 
     populateNewTaskItem() {
@@ -162,7 +170,7 @@ window.addEventListener('DOMContentLoaded', () => {
     addToTasksArea() {
       this.tasksArea.append(this.taskItem);
     }
-
+    // sets listeners to interact with a task item (click on destroy and edit task)
     setCommonTaskItemListeners() {
       this.setRemoveTaskListener();
       this.setEditTaskListener();
@@ -175,11 +183,16 @@ window.addEventListener('DOMContentLoaded', () => {
 
         trashIcon.addEventListener('click', () => {
           const really = confirm(`Are you really want to remove ${taskName}?`);
-          if (really) { this.taskItem.remove(); }
+          if (really) {
+            const taskId = extractId('task', this.taskItem.id); // example: from 'task_123' to '123'
+            const request = new TaskRequest('DELETE', `/projects/${this.projectId}/tasks/${taskId}`); // builds the request to delete certain task
+            request.send();
+            request.handleDestroying(this.taskItem); // removes corresponding task element on page if the task was successfully destroyed in DB
+          }
         });
     }
 
-    // sets the listner that edits the task's name on click on the 'edit' icon
+    // sets the listener that edits the task's name on click on the 'edit' icon
     setEditTaskListener() {
         const editIcon = this.taskItem.querySelector('[data-edit]'),
               taskNameNode = this.taskItem.querySelector('.task-name');
@@ -187,7 +200,10 @@ window.addEventListener('DOMContentLoaded', () => {
         editIcon.addEventListener('click', () => {
           const newTaskName = prompt('You can change the name of task', taskNameNode.textContent);
           if (newTaskName && newTaskName != '') {
-            taskNameNode.textContent = newTaskName;
+            const taskId = extractId('task', this.taskItem.id); // example: from 'task_555' to '555'
+            const request = new TaskRequest('PATCH', `/projects/${this.projectId}/tasks/${taskId}`);
+            request.send({ task: { name: newTaskName} });
+            request.handleUpdating(taskNameNode, newTaskName); // updates corresponding task element on page if the task was successfully updated in DB
           }
         });
     }
@@ -209,7 +225,6 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-
   // CRUD functions for Project
   class ProjectRequest {
     constructor(method, path) {
@@ -226,11 +241,19 @@ window.addEventListener('DOMContentLoaded', () => {
     loadProjects() {
        this.xhr.addEventListener('load', () => {
          const projects = JSON.parse(this.xhr.response);
-         projects.forEach(item => {
-           const projectWindow = new TodoWindow(workspace, item.name, item.id);
+
+         projects.forEach(project => {
+           const projectWindow = new TodoWindow(workspace, project.name, project.id);
            projectWindow.populateNewWindow();
            projectWindow.addToWorkSpace();
            projectWindow.setCommonWindowListeners();
+
+           // load all tasks related to the project
+           const targetPlace = workspace.querySelector(`#project_${project.id} .window-task-list`);
+
+           const tasks = new TaskRequest('GET', `/projects/${project.id}/tasks`);
+           tasks.send();
+           tasks.loadTasks(targetPlace, project.id);
          });
       });
     }
@@ -253,7 +276,7 @@ window.addEventListener('DOMContentLoaded', () => {
       });
     }
 
-    handleEditing(projectId, projectNewName, titleNode) {
+    handleEditing(projectNewName, titleNode) {
       this.xhr.addEventListener('load', () => {
          const result = JSON.parse(this.xhr.response);
          if(this.xhr.status == 200) {
@@ -271,8 +294,78 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  // CRUD functions for Task
+  class TaskRequest {
+    constructor(method, path) {
+      this.xhr = new XMLHttpRequest();
+      this.xhr.open(method, path);
+      this.xhr.setRequestHeader('Content-type', 'application/json', 'charset=utf-8');
+    }
+
+    send(data = null) {
+      if (data != null) { data = JSON.stringify(data); }
+      this.xhr.send(data);
+    }
+
+    loadTasks(targetPlace, projectId) {
+      this.xhr.addEventListener('load', () => {
+        const tasks = JSON.parse(this.xhr.response);
+        tasks.forEach(task => {
+          // render tasks items on page
+          const taskItem = new Task(targetPlace, task.name, task.id, projectId);
+          taskItem.populateNewTaskItem();
+          taskItem.addToTasksArea();
+          taskItem.setCommonTaskItemListeners();
+        });
+     });
+    }
+
+    saveTask(tasksNode, inputTask) {
+      this.xhr.addEventListener('load', () => {
+         const response = JSON.parse(this.xhr.response);
+         // render task item on page if the new task was saved to db
+         if(this.xhr.status == 201) {
+           const newTask = new Task(tasksNode, response.name, response.id);
+           newTask.populateNewTaskItem();
+           newTask.addToTasksArea();
+           newTask.setCommonTaskItemListeners();
+           inputTask.value = '';
+         } else {
+            alert('Error: name ' + response.name);
+         }
+      });
+    }
+
+    handleDestroying(taskItem) {
+      this.xhr.addEventListener('load', () => {
+        if(this.xhr.status == 204) {
+          taskItem.remove();
+        }
+      });
+    }
+
+    handleUpdating(taskNameNode, newName) {
+      this.xhr.addEventListener('load', () => {
+        const response = JSON.parse(this.xhr.response);
+
+        if(this.xhr.status == 200) {
+          taskNameNode.textContent = newName;
+        } else {
+          alert('Error: name ' + response.name);
+        }
+      });
+    }
+  }
+
   // loads all existing projects related to the existing user from DB
   const loadAllRequst = new ProjectRequest('GET', '/projects');
   loadAllRequst.send();
   loadAllRequst.loadProjects();
+
+
+  // this function is used to extract some id from CSS seletor(id), for example,
+  // from 'project_1234' to '1234' which is used for further async requests to DB.
+  function extractId(prefix, selector) {
+    return selector.replace(`${prefix}_`, '');
+  }
 });
