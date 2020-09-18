@@ -9,6 +9,11 @@ RSpec.describe 'Tasks', type: :request do
   let!(:too_short) { 'is too short (minimum is 3 characters)' }
   let(:no_blank) { "can't be blank" }
 
+  before(:each) do
+    allow_any_instance_of(TasksController)
+      .to receive(:authenticate_request).and_return(user)
+  end
+
   context 'receive all tasks' do
     it 'should return 3 tasks' do
       get "/projects/#{project.id}/tasks"

@@ -8,6 +8,11 @@ RSpec.describe 'Projects', type: :request do
   let!(:name_error) { 'is too short (minimum is 3 characters)' }
   let!(:project_params) { { project: { name: '' } } }
 
+  before(:each) do
+    allow_any_instance_of(ProjectsController)
+      .to receive(:authenticate_request).and_return(user)
+  end
+
   it 'should return all related to first user projects' do
     get '/projects'
 

@@ -61,3 +61,8 @@ gem 'jwt'
 
 # to build object for authorization
 gem 'simple_command'
+
+group :test do
+  # to clean testing db after each test
+  gem 'database_cleaner-active_record'
+end
