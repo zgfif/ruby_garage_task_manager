@@ -40,9 +40,6 @@ group :development, :test do
 end
 
 group :development do
-  # gem for simulation of confirmation email
-  gem 'letter_opener'
-
   gem 'listen', '~> 3.2'
   # Spring speeds up development by keeping your application running in the
   # background. Read more: https://github.com/rails/spring
@@ -56,5 +53,16 @@ end
 # Windows does not include zoneinfo files, so bundle the tzinfo-data gem
 gem 'tzinfo-data', platforms: %i[mingw mswin x64_mingw jruby]
 
-# for user authorization and authentication
-gem 'devise'
+# to secure user's passwords
+gem 'bcrypt'
+
+# to create encrypted token
+gem 'jwt'
+
+# to build object for authorization
+gem 'simple_command'
+
+group :test do
+  # to clean testing db after each test
+  gem 'database_cleaner-active_record'
+end
