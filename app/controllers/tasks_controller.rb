@@ -42,6 +42,6 @@ class TasksController < ApplicationController
   end
 
   def project
-    @project ||= present_user.projects.find(params[:project_id])
+    @project ||= current_user.projects.find(params[:project_id])
   end
 end

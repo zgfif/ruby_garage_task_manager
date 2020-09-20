@@ -2,13 +2,13 @@
 
 class ProjectsController < ApplicationController
   def index
-    @projects = present_user.projects
+    @projects = current_user.projects
 
     render json: @projects, status: :ok
   end
 
   def create
-    @project = present_user.projects.new(project_params)
+    @project = current_user.projects.new(project_params)
 
     if @project.save
       render json: @project, status: :created
@@ -36,7 +36,7 @@ class ProjectsController < ApplicationController
   private
 
   def project
-    @project ||= Project.find(params[:id])
+    @project ||= current_user.projects.find(params[:id])
   end
 
   def project_params

@@ -11,10 +11,26 @@ RSpec.describe 'Tasks', type: :request do
 
   before(:each) do
     allow_any_instance_of(TasksController)
+      .to receive(:current_user).and_return(user)
+    allow_any_instance_of(TasksController)
       .to receive(:authenticate_request).and_return(user)
   end
 
   context 'receive all tasks' do
+    let(:second_user) { create(:user) }
+    let(:second_project) { create(:project, user: second_user) }
+    let(:some_task) { create(:task, project: second_project) }
+
+    it 'should return only related to current user tasks' do
+      get "/projects/#{project.id}/tasks"
+
+      ids = response_body.map { |el| el['id'] }
+      tasks_ids = tasks.map { |task| task.id }
+
+      expect(ids).to_not include(some_task.id)
+      expect(ids).to eq(tasks_ids)
+    end
+
     it 'should return 3 tasks' do
       get "/projects/#{project.id}/tasks"
 
