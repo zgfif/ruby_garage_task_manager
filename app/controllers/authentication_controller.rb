@@ -12,4 +12,19 @@ class AuthenticationController < ApplicationController
       render json: { error: command.errors }, status: :unauthorized
     end
   end
+
+  def signup
+    command = RegistrateUser.call(auth_params)
+    if command.success?
+      render json: { user: command.result }, status: 201
+    else
+      render json: { errors: command.errors }, status: :conflict
+    end
+  end
+
+  private
+
+  def auth_params
+    params.require(:user).permit(:email, :password, :password_confirmation)
+  end
 end
