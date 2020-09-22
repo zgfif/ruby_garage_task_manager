@@ -11,10 +11,26 @@ RSpec.describe 'Tasks', type: :request do
 
   before(:each) do
     allow_any_instance_of(TasksController)
+      .to receive(:current_user).and_return(user)
+    allow_any_instance_of(TasksController)
       .to receive(:authenticate_request).and_return(user)
   end
 
   context 'receive all tasks' do
+    let(:second_user) { create(:user) }
+    let(:second_project) { create(:project, user: second_user) }
+    let(:some_task) { create(:task, project: second_project) }
+
+    it 'should return only related to current user tasks' do
+      get "/projects/#{project.id}/tasks"
+
+      ids = response_body.map { |el| el['id'] }
+      tasks_ids = tasks.map(&:id)
+
+      expect(ids).to_not include(some_task.id)
+      expect(ids).to eq(tasks_ids)
+    end
+
     it 'should return 3 tasks' do
       get "/projects/#{project.id}/tasks"
 
@@ -25,7 +41,8 @@ RSpec.describe 'Tasks', type: :request do
 
   context 'create task' do
     it 'should create task' do
-      post "/projects/#{project.id}/tasks", params: { task: { name: 'easy task' } }
+      task_params = { task: { name: 'easy task' } }
+      post "/projects/#{project.id}/tasks", params: task_params
 
       expect(response_body['name']).to eq('easy task')
       expect(response.status).to eq(201)
@@ -50,14 +67,16 @@ RSpec.describe 'Tasks', type: :request do
 
   context 'update task' do
     it 'should update task' do
-      patch "/projects/#{project.id}/tasks/#{Task.first.id}", params: { task: { name: 'altered' } }
+      t_params = { task: { name: 'altered' } }
+      patch "/projects/#{project.id}/tasks/#{Task.first.id}", params: t_params
 
       expect(response_body['name']).to eq('altered')
       expect(response.status).to eq(200)
     end
 
     it 'should NOT update task' do
-      patch "/projects/#{project.id}/tasks/#{Task.first.id}", params: { task: { name: 'al' } }
+      t_params = { task: { name: 'al' } }
+      patch "/projects/#{project.id}/tasks/#{Task.first.id}", params: t_params
 
       expect(response_body['name'][0]).to eq(too_short)
       expect(response.status).to eq(409)
@@ -67,6 +86,7 @@ RSpec.describe 'Tasks', type: :request do
   context 'destroy task' do
     it 'should destroy existing task' do
       delete "/projects/#{project.id}/tasks/#{Task.last.id}"
+
       expect(Task.count).to eq(2)
       expect(response.status).to eq(204)
     end

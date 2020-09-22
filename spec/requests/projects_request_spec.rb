@@ -4,19 +4,24 @@ require 'rails_helper'
 
 RSpec.describe 'Projects', type: :request do
   let!(:user) { create(:user) }
+  let!(:second_user) { create(:user) }
   let!(:project) { create(:project, user: user) }
+  let!(:second_project) { create(:project, user: second_user) }
   let!(:name_error) { 'is too short (minimum is 3 characters)' }
   let!(:project_params) { { project: { name: '' } } }
 
   before(:each) do
     allow_any_instance_of(ProjectsController)
+      .to receive(:current_user).and_return(user)
+    allow_any_instance_of(ProjectsController)
       .to receive(:authenticate_request).and_return(user)
   end
 
-  it 'should return all related to first user projects' do
+  it 'should return all related to current_user projects' do
     get '/projects'
-
     responsed_project = response_body[0]
+
+    expect(response_body.count).to eq(1)
     expect(project.id).to eq(responsed_project['id'])
     expect(response.status).to eq(200)
   end
@@ -60,14 +65,16 @@ RSpec.describe 'Projects', type: :request do
   it 'should destroy existing project' do
     delete "/projects/#{project.id}"
 
-    expect(Project.count).to eq(0)
+    expect(user.projects.count).to eq(0)
+    expect(Project.count).to eq(1)
     expect(response.status).to eq(204)
   end
 
   it 'should NOT destroy existing project' do
     delete '/projects/invalid_id'
 
-    expect(Project.count).to eq(1)
+    expect(user.projects.count).to eq(1)
+    expect(Project.count).to eq(2)
     expect(response.status).to eq(202)
   end
 end
