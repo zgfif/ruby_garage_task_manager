@@ -9,7 +9,7 @@ RSpec.describe 'Athentication endpoint', type: :request do
   end
 
   it 'should pass signin' do
-    post '/authenticate', params: @signin_params
+    post '/signin', params: @signin_params
 
     expect(response_body).to have_key('auth_token')
   end
@@ -17,7 +17,7 @@ RSpec.describe 'Athentication endpoint', type: :request do
   context 'should NOT signin' do
     it 'with invalid password' do
       @signin_params[:password] = '000000'
-      post '/authenticate', params: @signin_params
+      post '/signin', params: @signin_params
 
       expect(response_body['error']['user_authentication'])
         .to eq('invalid credentials')
@@ -25,7 +25,7 @@ RSpec.describe 'Athentication endpoint', type: :request do
 
     it 'with invalid email' do
       @signin_params[:email] = 'mail@example.com'
-      post '/authenticate', params: @signin_params
+      post '/signin', params: @signin_params
 
       expect(response_body['error']['user_authentication'])
         .to eq('invalid credentials')

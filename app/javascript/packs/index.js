@@ -2,7 +2,26 @@
 
 window.addEventListener('DOMContentLoaded', () => {
   const workspace = document.querySelector('.workspace'), // windows area
-  newWindowButton = document.querySelector('#btn-add-todo'); // button to add new window
+        newWindowButton = document.querySelector('#btn-add-todo'); // button to add new window
+
+// pseudo code:
+
+// guest user rights:
+//  - can signup and can signin.
+
+// signed-in user rights:
+//  - can signout;
+//  - actions with projects (CRUD);
+//  - actions with tasks (CRUD).
+
+
+// How does a browser know the user's type?
+// maybe, if own cookies has auth token, then - it a signed-in user,
+// else, it's guest user.
+
+// So, I have to set:
+//   - save received auth token to cookies(this task requires to develope the signin request);
+//   - add auth token to header to each request(except, signup, signin);
 
 
   // activates the listner to start rendering new TODO window(project)
@@ -231,6 +250,7 @@ window.addEventListener('DOMContentLoaded', () => {
        this.xhr = new XMLHttpRequest();
        this.xhr.open(method, path);
        this.xhr.setRequestHeader('Content-type', 'application/json', 'charset=utf-8');
+       this.xhr.setRequestHeader('Authorization', document.cookie.split('=')[1]);
     }
 
     send(data = null) {
@@ -242,20 +262,25 @@ window.addEventListener('DOMContentLoaded', () => {
        this.xhr.addEventListener('load', () => {
          const projects = JSON.parse(this.xhr.response);
 
-         projects.forEach(project => {
-           const projectWindow = new TodoWindow(workspace, project.name, project.id);
-           projectWindow.populateNewWindow();
-           projectWindow.addToWorkSpace();
-           projectWindow.setCommonWindowListeners();
+         if(!projects['error']) { renderProjectElements(projects); }
 
-           // load all tasks related to the project
-           const targetPlace = workspace.querySelector(`#project_${project.id} .window-task-list`);
-
-           const tasks = new TaskRequest('GET', `/projects/${project.id}/tasks`);
-           tasks.send();
-           tasks.loadTasks(targetPlace, project.id);
-         });
       });
+
+      function renderProjectElements(projects) {
+        projects.forEach(project => {
+          const projectWindow = new TodoWindow(workspace, project.name, project.id);
+          projectWindow.populateNewWindow();
+          projectWindow.addToWorkSpace();
+          projectWindow.setCommonWindowListeners();
+
+          // load all tasks related to the project
+          const targetPlace = workspace.querySelector(`#project_${project.id} .window-task-list`);
+
+          const tasks = new TaskRequest('GET', `/projects/${project.id}/tasks`);
+          tasks.send();
+          tasks.loadTasks(targetPlace, project.id);
+        });
+      }
     }
 
     handleCreation(workspace, projectName) {
@@ -300,6 +325,7 @@ window.addEventListener('DOMContentLoaded', () => {
       this.xhr = new XMLHttpRequest();
       this.xhr.open(method, path);
       this.xhr.setRequestHeader('Content-type', 'application/json', 'charset=utf-8');
+      this.xhr.setRequestHeader('Authorization', document.cookie.split('=')[1]);
     }
 
     send(data = null) {
@@ -310,13 +336,17 @@ window.addEventListener('DOMContentLoaded', () => {
     loadTasks(targetPlace, projectId) {
       this.xhr.addEventListener('load', () => {
         const tasks = JSON.parse(this.xhr.response);
-        tasks.forEach(task => {
-          // render tasks items on page
-          const taskItem = new Task(targetPlace, task.name, task.id, projectId);
-          taskItem.populateNewTaskItem();
-          taskItem.addToTasksArea();
-          taskItem.setCommonTaskItemListeners();
-        });
+        if (!tasks['error']) { renderTaskElements(tasks) }
+
+        function renderTaskElements(tasks) {
+          tasks.forEach(task => {
+            // render tasks items on page
+            const taskItem = new Task(targetPlace, task.name, task.id, projectId);
+            taskItem.populateNewTaskItem();
+            taskItem.addToTasksArea();
+            taskItem.setCommonTaskItemListeners();
+          });
+        }
      });
     }
 
@@ -357,15 +387,88 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // loads all existing projects related to the existing user from DB
-  const loadAllRequst = new ProjectRequest('GET', '/projects');
-  loadAllRequst.send();
-  loadAllRequst.loadProjects();
-
-
   // this function is used to extract some id from CSS seletor(id), for example,
   // from 'project_1234' to '1234' which is used for further async requests to DB.
   function extractId(prefix, selector) {
     return selector.replace(`${prefix}_`, '');
   }
+
+  // loads all existing projects related to the existing user from DB
+  const loadAllRequst = new ProjectRequest('GET', '/projects');
+  loadAllRequst.send();
+  loadAllRequst.loadProjects();
+
+  // signup window
+  const signupWindow = document.querySelector('.signup-window'),
+        signupLink = document.querySelector('#signup-link'),
+        signupCloseBtn = signupWindow.querySelector('.close-window-icon'),
+        signupSubmit = signupWindow.querySelector('#signup-submit');
+
+  signupLink.addEventListener('click', (e) => {
+    e.preventDefault();
+    signupWindow.classList.add('show');
+    signupWindow.classList.remove('hide');
+  });
+
+  signupCloseBtn.addEventListener('click', (e) => {
+    signupWindow.classList.add('hide');
+    signupWindow.classList.remove('show');
+  });
+
+
+  // signin window
+  const signinWindow = document.querySelector('.signin-window'),
+        signinLink = document.querySelector('#signin-link'),
+        signinCloseBtn = signinWindow.querySelector('.close-window-icon'),
+        signinSubmit = signinWindow.querySelector('#signin-submit');
+
+  signinLink.addEventListener('click', (e) => {
+    e.preventDefault();
+    signinWindow.classList.add('show');
+    signinWindow.classList.remove('hide');
+  });
+
+  signinCloseBtn.addEventListener('click', (e) => {
+    signinWindow.classList.add('hide');
+    signinWindow.classList.remove('show');
+  });
+
+
+  signinSubmit.addEventListener('click', (e) => {
+    e.preventDefault();
+    const email = signinWindow.querySelector('.input-email').value,
+          password = signinWindow.querySelector('.input-password').value;
+
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', '/signin');
+    xhr.setRequestHeader('Content-type', 'application/json', 'charset=utf-8');
+    const data = JSON.stringify({ user: { email: email, password: password } });
+    xhr.send(data);
+
+    xhr.addEventListener('load', (e)=> {
+      const response = JSON.parse(xhr.response);
+
+      if(response.auth_token) {
+         console.log(response.auth_token);
+         signinWindow.classList.add('hide');
+
+         document.cookie = `Authorization=${response.auth_token}; path=/`;
+      } else { console.log('error'); }
+    });
+  });
+
+
+  // signout
+  // if a user clicks on 'Signout' reference then browser cleanes all cookies
+  // document.cookie = "username=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+  console.log(document.cookie);
+  const signoutLink = document.querySelector('#signout-link');
+  signoutLink.addEventListener('click', (e) => {
+    e.preventDefault();
+    const result = confirm('Are you sure want to exit?');
+    if(result) {
+      document.cookie = "Authorization=; path=/";
+      location.reload();
+    }
+  });
 });
