@@ -1,31 +1,44 @@
 'use strict';
 
+import { cookieObject, isSignIn } from './cookie_helper';
+import { extractId } from './selector_helper';
+import { hideElement, showElement } from './show_helpers';
+
 window.addEventListener('DOMContentLoaded', () => {
   const workspace = document.querySelector('.workspace'), // windows area
         newWindowButton = document.querySelector('#btn-add-todo'); // button to add new window
 
-// pseudo code:
+  // show and hide signin, signout, signup links
+  const signUpLink = document.querySelector('#signup-link'),
+        signInLink = document.querySelector('#signin-link'),
+        signOutLink = document.querySelector('#signout-link');
 
-// guest user rights:
-//  - can signup and can signin.
+  function updateLinksAndButtons() {
+    if(isSignIn()) {
+      hideElement(signInLink, 'show-link');
+      hideElement(signUpLink, 'show-link');
+      showElement(signOutLink, 'show-link');
+      showElement(newWindowButton, 'show-add-todo-button');
+    } else {
+      showElement(signInLink, 'show-link');
+      showElement(signUpLink,'show-link');
+      hideElement(signOutLink, 'show-link');
+      hideElement(newWindowButton, 'show-add-todo-button');
+    }
+  }
 
-// signed-in user rights:
-//  - can signout;
-//  - actions with projects (CRUD);
-//  - actions with tasks (CRUD).
+// the FIRST STEP
+// after loading index page check token and
+// hide or show certain links that depends from presence of the token
+ updateLinksAndButtons();
 
+// the SECOND STEP
+// load all existing TODO lists
+ // loadTodoLists();
 
-// How does a browser know the user's type?
-// maybe, if own cookies has auth token, then - it a signed-in user,
-// else, it's guest user.
-
-// So, I have to set:
-//   - save received auth token to cookies(this task requires to develope the signin request);
-//   - add auth token to header to each request(except, signup, signin);
-
-
-  // activates the listner to start rendering new TODO window(project)
-  listenNewListButton(newWindowButton);
+// THE THIRD STEP
+// set listener to add new TODO list
+ listenNewListButton(newWindowButton);
 
   // the class is used to build windows(projects) and set corresponding listeners(CRUD)
   class TodoWindow {
@@ -250,7 +263,7 @@ window.addEventListener('DOMContentLoaded', () => {
        this.xhr = new XMLHttpRequest();
        this.xhr.open(method, path);
        this.xhr.setRequestHeader('Content-type', 'application/json', 'charset=utf-8');
-       this.xhr.setRequestHeader('Authorization', document.cookie.split('=')[1]);
+       this.xhr.setRequestHeader('Authorization', cookieObject().Authorization);
     }
 
     send(data = null) {
@@ -262,7 +275,7 @@ window.addEventListener('DOMContentLoaded', () => {
        this.xhr.addEventListener('load', () => {
          const projects = JSON.parse(this.xhr.response);
 
-         if(!projects['error']) { renderProjectElements(projects); }
+         if(!projects.error) { renderProjectElements(projects); }
 
       });
 
@@ -325,7 +338,7 @@ window.addEventListener('DOMContentLoaded', () => {
       this.xhr = new XMLHttpRequest();
       this.xhr.open(method, path);
       this.xhr.setRequestHeader('Content-type', 'application/json', 'charset=utf-8');
-      this.xhr.setRequestHeader('Authorization', document.cookie.split('=')[1]);
+      this.xhr.setRequestHeader('Authorization', cookieObject().Authorization);
     }
 
     send(data = null) {
@@ -336,7 +349,7 @@ window.addEventListener('DOMContentLoaded', () => {
     loadTasks(targetPlace, projectId) {
       this.xhr.addEventListener('load', () => {
         const tasks = JSON.parse(this.xhr.response);
-        if (!tasks['error']) { renderTaskElements(tasks) }
+        if (!tasks.error) { renderTaskElements(tasks); }
 
         function renderTaskElements(tasks) {
           tasks.forEach(task => {
@@ -387,87 +400,157 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // this function is used to extract some id from CSS seletor(id), for example,
-  // from 'project_1234' to '1234' which is used for further async requests to DB.
-  function extractId(prefix, selector) {
-    return selector.replace(`${prefix}_`, '');
-  }
+  // loads all TODO LISTS (existing projects) related to the current_user from DB
+  // function loadTodoLists() {
+    const loadAllRequst = new ProjectRequest('GET', '/projects');
+    loadAllRequst.send();
+    loadAllRequst.loadProjects();
+  // }
 
-  // loads all existing projects related to the existing user from DB
-  const loadAllRequst = new ProjectRequest('GET', '/projects');
-  loadAllRequst.send();
-  loadAllRequst.loadProjects();
 
-  // signup window
-  const signupWindow = document.querySelector('.signup-window'),
-        signupLink = document.querySelector('#signup-link'),
-        signupCloseBtn = signupWindow.querySelector('.close-window-icon'),
-        signupSubmit = signupWindow.querySelector('#signup-submit');
 
-  signupLink.addEventListener('click', (e) => {
-    e.preventDefault();
-    signupWindow.classList.add('show');
-    signupWindow.classList.remove('hide');
-  });
 
-  signupCloseBtn.addEventListener('click', (e) => {
-    signupWindow.classList.add('hide');
-    signupWindow.classList.remove('show');
-  });
 
 
   // signin window
-  const signinWindow = document.querySelector('.signin-window'),
-        signinLink = document.querySelector('#signin-link'),
-        signinCloseBtn = signinWindow.querySelector('.close-window-icon'),
-        signinSubmit = signinWindow.querySelector('#signin-submit');
+  function openSigninModal() {
+    const signinWindow = document.querySelector('.signin-window'),
+          closeBtn = signinWindow.querySelector('.close-window-icon'),
+          submitBtn = signinWindow.querySelector('#signin-submit');
 
-  signinLink.addEventListener('click', (e) => {
-    e.preventDefault();
-    signinWindow.classList.add('show');
-    signinWindow.classList.remove('hide');
-  });
+    // listener to open signin
+    signInLink.addEventListener('click', event => {
+      event.preventDefault();
+      showElement(signinWindow, 'show');
+      setInputListeners();
 
-  signinCloseBtn.addEventListener('click', (e) => {
-    signinWindow.classList.add('hide');
-    signinWindow.classList.remove('show');
-  });
-
-
-  signinSubmit.addEventListener('click', (e) => {
-    e.preventDefault();
-    const email = signinWindow.querySelector('.input-email').value,
-          password = signinWindow.querySelector('.input-password').value;
-
-    const xhr = new XMLHttpRequest();
-    xhr.open('POST', '/signin');
-    xhr.setRequestHeader('Content-type', 'application/json', 'charset=utf-8');
-    const data = JSON.stringify({ user: { email: email, password: password } });
-    xhr.send(data);
-
-    xhr.addEventListener('load', (e)=> {
-      const response = JSON.parse(xhr.response);
-
-      if(response.auth_token) {
-         console.log(response.auth_token);
-         signinWindow.classList.add('hide');
-
-         document.cookie = `Authorization=${response.auth_token}; path=/`;
-      } else { console.log('error'); }
+      // listener to close signin
+      closeBtn.addEventListener('click', event => {
+         hideElement(signinWindow, 'show');
+      });
     });
-  });
+
+    function setInputListeners() {
+      const email = signinWindow.querySelector('.input-email'),
+            password = signinWindow.querySelector('.input-password');
+
+      submitBtn.addEventListener('click', event => {
+        event.preventDefault();
+
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', '/signin');
+        xhr.setRequestHeader('Content-type', 'application/json', 'charset=utf-8');
+        const payload = JSON.stringify({ user: { email: email.value, password: password.value } });
+        xhr.send(payload);
+
+        xhr.addEventListener('load', (e) => {
+          const response = JSON.parse(xhr.response);
+          if(response.auth_token) {
+            document.cookie = `Authorization=${response.auth_token}; path=/`;
+            hideElement(signinWindow, 'show');
+            updateLinksAndButtons();
+          } else { alert('invalid email or/and password'); }
+        });
+      });
+    }
+  }
+
+  openSigninModal();
+
+  //   e.preventDefault();
+  //   signinWindow.classList.add(  //
+  // signinSubmit.addEventListener('click', (e) => {
+  //   e.preventDefault();
+  //   const email = signinWindow.querySelector('.input-email').value,
+  //         password = signinWindow.querySelector('.input-password').value;
+  //
+  //   const xhr = new XMLHttpRequest();
+  //   xhr.open('POST', '/signin');
+  //   xhr.setRequestHeader('Content-type', 'application/json', 'charset=utf-8');
+  //   const data = JSON.stringify({ user: { email: email, password: password } });
+  //   xhr.send(data);
+  //
+  //   xhr.addEventListener('load', (e)=> {
+  //     const response = JSON.parse(xhr.response);
+  //
+  //     if(response.auth_token) {
+  //        signinWindow.classList.add('hide');
+  //        document.cookie = `Authorization=${response.auth_token}; path=/`;
+  //        updateLinksAndButtons();
+  //     } else { console.log('error'); }
+  //   });
+  // }); );
+  //   signinWindow.classList.remove('hide');
+  // });
+  //
+  // signinCloseBtn.addEventListener('click', (e) => {
+  //   signinWindow.classList.add('hide');
+  //   signinWindow.classList.remove('show');
+  // });
+  //
+  //
+  // signinSubmit.addEventListener('click', (e) => {
+  //   e.preventDefault();
+  //   const email = signinWindow.querySelector('.input-email').value,
+  //         password = signinWindow.querySelector('.input-password').value;
+  //
+  //   const xhr = new XMLHttpRequest();
+  //   xhr.open('POST', '/signin');
+  //   xhr.setRequestHeader('Content-type', 'application/json', 'charset=utf-8');
+  //   const data = JSON.stringify({ user: { email: email, password: password } });
+  //   xhr.send(data);
+  // signinSubmit.addEventListener('click', (e) => {
+  //   e.preventDefault();
+  //   const email = signinWindow.querySelector('.input-email').value,
+  //         password = signinWindow.querySelector('.input-password').value;
+  //
+  //   const xhr = new XMLHttpRequest();
+  //   xhr.open('POST', '/signin');
+  //   xhr.setRequestHeader('Content-type', 'application/json', 'charset=utf-8');
+  //   const data = JSON.stringify({ user: { email: email, password: password } });
+  //   xhr.send(data);
+  //
+  //   xhr.addEventListener('load', (e)=> {
+  //     const response = JSON.parse(xhr.response);
+  //
+  //     if(response.auth_token) {
+  //        signinWindow.classList.add('hide');
+  //        document.cookie = `Authorization=${response.auth_token}; path=/`;
+  //        updateLinksAndButtons();
+  //     } else { console.log('error'); }
+  //   });
+  // }); );
+  //   signinWindow.classList.remove('hide');
+  //   xhr.addEventListener('load', (e)=> {
+  //     const response = JSON.parse(xhr.response);
+  //
+  //     if(response.auth_token) {
+  //        signinWindow.classList.add('hide');
+  //        document.cookie = `Authorization=${response.auth_token}; path=/`;
+  //        updateLinksAndButtons();
+  //     } else { console.log('error'); }
+  //   });
+  // });
+
+
+
+
+
+
+
+
 
 
   // signout
   // if a user clicks on 'Signout' reference then browser cleanes all cookies
   // document.cookie = "username=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-  console.log(document.cookie);
+  // console.log(document.cookie);
   const signoutLink = document.querySelector('#signout-link');
   signoutLink.addEventListener('click', (e) => {
     e.preventDefault();
     const result = confirm('Are you sure want to exit?');
     if(result) {
-      document.cookie = "Authorization=; path=/";
+      document.cookie = 'Authorization=; path=/';
       location.reload();
     }
   });

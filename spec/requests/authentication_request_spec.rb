@@ -5,7 +5,7 @@ require 'rails_helper'
 RSpec.describe 'Athentication endpoint', type: :request do
   before(:each) do
     user = create(:user)
-    @signin_params = { email: user.email, password: '111111' }
+    @signin_params =  { user: { email: user.email, password: '111111' } }
   end
 
   it 'should pass signin' do
@@ -16,7 +16,7 @@ RSpec.describe 'Athentication endpoint', type: :request do
 
   context 'should NOT signin' do
     it 'with invalid password' do
-      @signin_params[:password] = '000000'
+      @signin_params[:user][:password] = '000000'
       post '/signin', params: @signin_params
 
       expect(response_body['error']['user_authentication'])
@@ -24,7 +24,7 @@ RSpec.describe 'Athentication endpoint', type: :request do
     end
 
     it 'with invalid email' do
-      @signin_params[:email] = 'mail@example.com'
+      @signin_params[:user][:email] = 'mail@example.com'
       post '/signin', params: @signin_params
 
       expect(response_body['error']['user_authentication'])

@@ -2,7 +2,6 @@
 
 class ProjectsController < ApplicationController
   def index
-    p current_user
     @projects = current_user.projects if current_user
 
     render json: @projects, status: :ok
