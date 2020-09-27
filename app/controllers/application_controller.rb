@@ -8,10 +8,6 @@ class ApplicationController < ActionController::Base
 
   attr_reader :current_user
 
-  def present_user
-    User.first
-  end
-
   private
 
   def authenticate_request

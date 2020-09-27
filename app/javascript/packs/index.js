@@ -1,213 +1,57 @@
 'use strict';
 
+import { cookieObject, isSignIn } from './cookie_helper';
+import { extractId } from './selector_helper';
+import { hideElement, showElement } from './show_helpers';
+import { ProjectRequest } from './requests/project_request';
+
 window.addEventListener('DOMContentLoaded', () => {
   const workspace = document.querySelector('.workspace'), // windows area
-  newWindowButton = document.querySelector('#btn-add-todo'); // button to add new window
+        newWindowButton = document.querySelector('#btn-add-todo'); // button to add new window
 
+  // show and hide signin, signout, signup links
+  const signUpLink = document.querySelector('#signup-link'),
+        signInLink = document.querySelector('#signin-link'),
+        signOutLink = document.querySelector('#signout-link');
 
-  // activates the listner to start rendering new TODO window(project)
-  listenNewListButton(newWindowButton);
+// the FIRST STEP
+// after loading index page check token and
+// hide or show certain links that depends from presence of the token
+ updateLinksAndButtons();
 
-  // the class is used to build windows(projects) and set corresponding listeners(CRUD)
-  class TodoWindow {
-      constructor(targetPlace, listName, projectId) {
-        this.targetPlace = targetPlace;
-        this.listName = listName;
-        this.newWindow = document.createElement('div');
-        this.newWindow.classList.add('window');
-        this.newWindow.id = `project_${projectId}`;
-      }
+ function updateLinksAndButtons() {
+   if(isSignIn()) {
+     // the SECOND STEP
+     // load all existing TODO lists
+     loadTodoLists();
 
-      addToWorkSpace() {
-         this.targetPlace.append(this.newWindow);
-      }
+     hideElement(signInLink, 'show-link');
+     hideElement(signUpLink, 'show-link');
+     showElement(signOutLink, 'show-link');
+     showElement(newWindowButton, 'show-add-todo-button');
+   } else {
+     setSigninModalListener();
+     setSignupModalListener();
 
-      populateNewWindow() {
-        this.newWindow.innerHTML = `<div class="window-header">
-                               <div class="header-left-content">
-                                  <div class="icon-schedule">
-                                      <svg width="2em" height="2em" viewBox="0 0 16 16" class="bi bi-journal-text" fill="white" xmlns="http://www.w3.org/2000/svg">
-                                      <path d="M3 0h10a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2v-1h1v1a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H3a1 1 0 0 0-1 1v1H1V2a2 2 0 0 1 2-2z"/>
-                                      <path d="M1 5v-.5a.5.5 0 0 1 1 0V5h.5a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1H1zm0 3v-.5a.5.5 0 0 1 1 0V8h.5a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1H1zm0 3v-.5a.5.5 0 0 1 1 0v.5h.5a.5.5 0 0 1 0 1h-2a.5.5 0 0 1 0-1H1z"/>
-                                      <path fill-rule="evenodd" d="M5 10.5a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1h-2a.5.5 0 0 1-.5-.5zm0-2a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5zm0-2a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5zm0-2a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5z"/>
-                                      </svg>
-                                  </div>
-                                  <div class='todo-list-title'><div>${this.listName}</div></div>
-                               </div>
-                               <div class="header-right-content">
-                                      <div class="icon-edit">
-                                          <svg width="2em" height="2em" viewBox="0 0 16 16" class="bi bi-pen" fill="white" xmlns="http://www.w3.org/2000/svg">
-                                          <path fill-rule="evenodd" d="M13.498.795l.149-.149a1.207 1.207 0 1 1 1.707 1.708l-.149.148a1.5 1.5 0 0 1-.059 2.059L4.854 14.854a.5.5 0 0 1-.233.131l-4 1a.5.5 0 0 1-.606-.606l1-4a.5.5 0 0 1 .131-.232l9.642-9.642a.5.5 0 0 0-.642.056L6.854 4.854a.5.5 0 1 1-.708-.708L9.44.854A1.5 1.5 0 0 1 11.5.796a1.5 1.5 0 0 1 1.998-.001zm-.644.766a.5.5 0 0 0-.707 0L1.95 11.756l-.764 3.057 3.057-.764L14.44 3.854a.5.5 0 0 0 0-.708l-1.585-1.585z"/>
-                                          </svg>
-
-                                      </div>
-                                      <div class="header-line">
-                                         <div class="vll-header"></div>
-                                      </div>
-                                      <div class="icon-trash">
-                                          <svg width="2em" height="2em" viewBox="0 0 16 16" class="bi bi-trash" fill="white" xmlns="http://www.w3.org/2000/svg">
-                                          <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
-                                          <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4L4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/>
-                                          </svg>
-                                      </div>
-                               </div>
-                           </div>
-                           <div class="window-add">
-                               <div class="icon-plus">
-                                   <svg xmlns="http://www.w3.org/2000/svg" width="2em" height="2em" fill="#00b386" viewBox="0 0 24 24"><path d="M24 10h-10v-10h-4v10h-10v4h10v10h4v-10h10z"/></svg>
-                               </div>
-                               <div class="input-area">
-                                   <input id="add-task-input" type="text" placeholder="Start typing here to create a task...">
-                               </div>
-                               <div class="add-task-button">
-                                   <button id="btn-add-task">Add Task</button>
-                               </div>
-                           </div>
-                           <div class="window-task-list"></div>`;
-      }
-
-
-      setCommonWindowListeners() {
-           this.setEditTodoListListener();
-           this.setCloseWindowListener();
-           this.setAddTaskListener();
-      }
-
-      // Below shown listeners that used only indirectly
-      // (in setCommonWindowListeners() function)
-
-      // sets the listener that removes the TODO list window on click the 'trash' icon
-      setCloseWindowListener() {
-        const trash = this.newWindow.querySelector('.icon-trash');
-
-        trash.addEventListener('click', () => {
-            const really = confirm('Are you sure want to remove this TODO list?');
-            if(really) {
-              // deletes an existing project after click on 'trash icon and ok in alert'
-              const projectId = extractId('project', this.newWindow.id);
-              const deleteRequest = new ProjectRequest('DELETE', `/projects/${projectId}`);
-              deleteRequest.send();
-              deleteRequest.handleDestroying(this.newWindow);
-            }
-        });
-      }
-
-      // sets the listener that creates a new task after click "Add Task" button
-      setAddTaskListener() {
-        const addTaskBtn = this.newWindow.querySelector('#btn-add-task'),
-              inputTask = this.newWindow.querySelector('#add-task-input'),
-              tasksNode = this.newWindow.querySelector('.window-task-list');
-
-        addTaskBtn.addEventListener('click', () => {
-          if (inputTask.value) {
-            const projectId = extractId('project', this.newWindow.id);
-            const request = new TaskRequest('POST', `/projects/${projectId}/tasks`);
-            request.send({ task: { name: inputTask.value } });
-            request.saveTask(tasksNode, inputTask);
-          }
-        });
-      }
-
-      // set the listener taht edits the todo list name on click 'pen' icon
-      setEditTodoListListener() {
-          const editIcon = this.newWindow.querySelector('.header-right-content .icon-edit'),
-                todoListTitleNode = this.newWindow.querySelector('.todo-list-title div');
-
-          editIcon.addEventListener('click', () => {
-            const newTodoListName = prompt('Enter the new name of list', todoListTitleNode.textContent);
-            if (newTodoListName && newTodoListName != '') {
-              // update the name of existing project
-              const projectId = extractId('project', this.newWindow.id);
-
-              const updateRequest = new ProjectRequest('PATCH', `/projects/${projectId}`);
-
-              const projectData = { project: { name: newTodoListName } };
-              updateRequest.send(projectData);
-              updateRequest.handleEditing(newTodoListName, todoListTitleNode);
-            }
-          });
-      }
+     showElement(signInLink, 'show-link');
+     showElement(signUpLink,'show-link');
+     hideElement(signOutLink, 'show-link');
+     hideElement(newWindowButton, 'show-add-todo-button');
    }
+ }
 
-  // the class is used to build task items and set corresponding listeners(CRUD)
-  class Task {
-    constructor(tasksArea, taskName, taskId, projectId) {
-      this.tasksArea = tasksArea;
-      this.taskName = taskName;
-      this.taskItem = document.createElement('div');
-      this.taskItem.classList.add('task-item');
-      this.taskItem.id = `task_${taskId}`;
-      this.projectId = projectId;
-    }
 
-    populateNewTaskItem() {
-      this.taskItem.innerHTML = `<div class="task-completing"><input type="checkbox"></div>
-                               <div class="task-name">${this.taskName}</div>
-                               <div class="task-actions">
-                                   <div data-move class="action-icon">
-                                      <svg width="1.2em" height="1.2em" viewBox="0 0 16 16" class="bi bi-arrow-down-up" fill="grey" xmlns="http://www.w3.org/2000/svg">
-                                       <path fill-rule="evenodd" d="M11.5 15a.5.5 0 0 0 .5-.5V2.707l3.146 3.147a.5.5 0 0 0 .708-.708l-4-4a.5.5 0 0 0-.708 0l-4 4a.5.5 0 1 0 .708.708L11 2.707V14.5a.5.5 0 0 0 .5.5zm-7-14a.5.5 0 0 1 .5.5v11.793l3.146-3.147a.5.5 0 0 1 .708.708l-4 4a.5.5 0 0 1-.708 0l-4-4a.5.5 0 0 1 .708-.708L4 13.293V1.5a.5.5 0 0 1 .5-.5z"/>
-                                       </svg>
-                                   </div>
 
-                                   <div data-edit class="action-icon">
-                                   <div class="vlr"></div>
-                                       <svg width="1.2em" height="1.2em" viewBox="0 0 16 16" class="bi bi-pen" fill="grey" xmlns="http://www.w3.org/2000/svg">
-                                       <path fill-rule="evenodd" d="M13.498.795l.149-.149a1.207 1.207 0 1 1 1.707 1.708l-.149.148a1.5 1.5 0 0 1-.059 2.059L4.854 14.854a.5.5 0 0 1-.233.131l-4 1a.5.5 0 0 1-.606-.606l1-4a.5.5 0 0 1 .131-.232l9.642-9.642a.5.5 0 0 0-.642.056L6.854 4.854a.5.5 0 1 1-.708-.708L9.44.854A1.5 1.5 0 0 1 11.5.796a1.5 1.5 0 0 1 1.998-.001zm-.644.766a.5.5 0 0 0-.707 0L1.95 11.756l-.764 3.057 3.057-.764L14.44 3.854a.5.5 0 0 0 0-.708l-1.585-1.585z"/>
-                                       </svg>
-                                       <div class="vll"></div>
-                                   </div>
+ // loads all TODO LISTS (existing projects) related to the current_user from DB
+ function loadTodoLists() {
+   const requst = new ProjectRequest('GET', '/projects');
+   requst.send();
+   requst.loadProjects(workspace);
+ }
 
-                                   <div data-remove class="action-icon">
-                                       <svg width="1.2em" height="1.2em" viewBox="0 0 16 16" class="bi bi-trash" fill="grey" xmlns="http://www.w3.org/2000/svg">
-                                       <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
-                                       <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4L4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/>
-                                       </svg>
-                                   </div>
-                               </div>`;
-    }
-
-    addToTasksArea() {
-      this.tasksArea.append(this.taskItem);
-    }
-    // sets listeners to interact with a task item (click on destroy and edit task)
-    setCommonTaskItemListeners() {
-      this.setRemoveTaskListener();
-      this.setEditTaskListener();
-    }
-
-    // sets the listener that removes the task on click the 'trash' icon
-    setRemoveTaskListener() {
-        const trashIcon = this.taskItem.querySelector('[data-remove]'),
-              taskName = this.taskItem.querySelector('.task-name').textContent;
-
-        trashIcon.addEventListener('click', () => {
-          const really = confirm(`Are you really want to remove ${taskName}?`);
-          if (really) {
-            const taskId = extractId('task', this.taskItem.id); // example: from 'task_123' to '123'
-            const request = new TaskRequest('DELETE', `/projects/${this.projectId}/tasks/${taskId}`); // builds the request to delete certain task
-            request.send();
-            request.handleDestroying(this.taskItem); // removes corresponding task element on page if the task was successfully destroyed in DB
-          }
-        });
-    }
-
-    // sets the listener that edits the task's name on click on the 'edit' icon
-    setEditTaskListener() {
-        const editIcon = this.taskItem.querySelector('[data-edit]'),
-              taskNameNode = this.taskItem.querySelector('.task-name');
-
-        editIcon.addEventListener('click', () => {
-          const newTaskName = prompt('You can change the name of task', taskNameNode.textContent);
-          if (newTaskName && newTaskName != '') {
-            const taskId = extractId('task', this.taskItem.id); // example: from 'task_555' to '555'
-            const request = new TaskRequest('PATCH', `/projects/${this.projectId}/tasks/${taskId}`);
-            request.send({ task: { name: newTaskName} });
-            request.handleUpdating(taskNameNode, newTaskName); // updates corresponding task element on page if the task was successfully updated in DB
-          }
-        });
-    }
-  }
+// THE THIRD STEP
+// set listener to add new TODO list
+ listenNewListButton(newWindowButton);
 
   // sets the listener that creates TODO list window on click the 'Add TODO list' button
   function listenNewListButton(button) {
@@ -225,147 +69,121 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // CRUD functions for Project
-  class ProjectRequest {
-    constructor(method, path) {
-       this.xhr = new XMLHttpRequest();
-       this.xhr.open(method, path);
-       this.xhr.setRequestHeader('Content-type', 'application/json', 'charset=utf-8');
-    }
+  // signup window
+  function setSignupModalListener() {
+    const signupWindow = document.querySelector('.signup-window'),
+          closeBtn = signupWindow.querySelector('.close-window-icon'),
+          submitBtn = signupWindow.querySelector('#signup-submit');
 
-    send(data = null) {
-      if (data != null) { data = JSON.stringify(data); }
-      this.xhr.send(data);
-    }
+    signUpLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      showElement(signupWindow, 'show');
+      hideElement(signUpLink, 'show');
+      hideElement(signInLink, 'show');
 
-    loadProjects() {
-       this.xhr.addEventListener('load', () => {
-         const projects = JSON.parse(this.xhr.response);
-
-         projects.forEach(project => {
-           const projectWindow = new TodoWindow(workspace, project.name, project.id);
-           projectWindow.populateNewWindow();
-           projectWindow.addToWorkSpace();
-           projectWindow.setCommonWindowListeners();
-
-           // load all tasks related to the project
-           const targetPlace = workspace.querySelector(`#project_${project.id} .window-task-list`);
-
-           const tasks = new TaskRequest('GET', `/projects/${project.id}/tasks`);
-           tasks.send();
-           tasks.loadTasks(targetPlace, project.id);
-         });
+      closeBtn.addEventListener('click', () => {
+        hideElement(signupWindow, 'show');
+        showElement(signUpLink, 'show');
+        showElement(signInLink, 'show');
       });
-    }
 
-    handleCreation(workspace, projectName) {
-      this.workspace = workspace;
-      this.projectName = projectName;
+      submitBtn.addEventListener('click', (event) => {
+        event.preventDefault();
 
-      this.xhr.addEventListener('load', () => {
-        const response = JSON.parse(this.xhr.response);
+        const email = signupWindow.querySelector('.input-email'),
+              password = signupWindow.querySelector('.input-password'),
+              passwordConfirmation = signupWindow.querySelector('.input-password-confirmation');
 
-        if (this.xhr.status == 201) {
-          const newWindow = new TodoWindow(workspace, projectName, response.id);
-          newWindow.populateNewWindow();
-          newWindow.addToWorkSpace();
-          newWindow.setCommonWindowListeners();
-        } else {
-          alert('Error! name: ' + response.name);
-        }
+       if(email.value !='' && password.value !='' && password.value == passwordConfirmation.value) {
+         makeCreateUserRequest(email, password, passwordConfirmation);
+       } else { alert('incorrect data'); }
+
       });
-    }
 
-    handleEditing(projectNewName, titleNode) {
-      this.xhr.addEventListener('load', () => {
-         const result = JSON.parse(this.xhr.response);
-         if(this.xhr.status == 200) {
-           titleNode.textContent = projectNewName;
-         } else {
-           alert('Error! name: ' + result.name);
-         }
-      });
-    }
+      function makeCreateUserRequest(email, pass, passConfirm) {
+        const payload = JSON.stringify({ user: { email: email.value, password: pass.value, password_confirmation: passConfirm.value } });
+        const request = new XMLHttpRequest();
+        request.open('POST', '/signup');
+        request.setRequestHeader('Content-type', 'application/json', 'charset=utf-8');
+        request.send(payload);
 
-    handleDestroying(projectNode) {
-      this.xhr.addEventListener('load', () => {
-        if(this.xhr.status == 204) { projectNode.remove(); }
-      });
-    }
-  }
+        request.addEventListener('load', () => {
+          const response = JSON.parse(request.response);
+          if (response.errors) {
+            alert(request.response);
+          } else {
 
-  // CRUD functions for Task
-  class TaskRequest {
-    constructor(method, path) {
-      this.xhr = new XMLHttpRequest();
-      this.xhr.open(method, path);
-      this.xhr.setRequestHeader('Content-type', 'application/json', 'charset=utf-8');
-    }
-
-    send(data = null) {
-      if (data != null) { data = JSON.stringify(data); }
-      this.xhr.send(data);
-    }
-
-    loadTasks(targetPlace, projectId) {
-      this.xhr.addEventListener('load', () => {
-        const tasks = JSON.parse(this.xhr.response);
-        tasks.forEach(task => {
-          // render tasks items on page
-          const taskItem = new Task(targetPlace, task.name, task.id, projectId);
-          taskItem.populateNewTaskItem();
-          taskItem.addToTasksArea();
-          taskItem.setCommonTaskItemListeners();
+            hideElement(signupWindow, 'show');
+            showElement(signUpLink, 'show');
+            showElement(signInLink, 'show');
+            alert(`The user ${email.value} was successfully registered!`);
+            email.value = '';
+            pass.value = '';
+            passConfirm.value = '';
+          }
         });
-     });
-    }
+      }
+    });
+  }
 
-    saveTask(tasksNode, inputTask) {
-      this.xhr.addEventListener('load', () => {
-         const response = JSON.parse(this.xhr.response);
-         // render task item on page if the new task was saved to db
-         if(this.xhr.status == 201) {
-           const newTask = new Task(tasksNode, response.name, response.id);
-           newTask.populateNewTaskItem();
-           newTask.addToTasksArea();
-           newTask.setCommonTaskItemListeners();
-           inputTask.value = '';
-         } else {
-            alert('Error: name ' + response.name);
-         }
+  // signin window
+  function setSigninModalListener() {
+    const signinWindow = document.querySelector('.signin-window'),
+          closeBtn = signinWindow.querySelector('.close-window-icon'),
+          submitBtn = signinWindow.querySelector('#signin-submit');
+
+    // listener to open signin
+    signInLink.addEventListener('click', event => {
+      event.preventDefault();
+      showElement(signinWindow, 'show');
+      hideElement(signUpLink, 'show');
+      hideElement(signInLink, 'show');
+      setInputListeners();
+
+
+      // listener to close signin
+      closeBtn.addEventListener('click', event => {
+         hideElement(signinWindow, 'show');
+         showElement(signUpLink, 'show');
+         showElement(signInLink, 'show');
       });
-    }
+    });
 
-    handleDestroying(taskItem) {
-      this.xhr.addEventListener('load', () => {
-        if(this.xhr.status == 204) {
-          taskItem.remove();
-        }
-      });
-    }
+    function setInputListeners() {
+      const email = signinWindow.querySelector('.input-email'),
+            password = signinWindow.querySelector('.input-password');
 
-    handleUpdating(taskNameNode, newName) {
-      this.xhr.addEventListener('load', () => {
-        const response = JSON.parse(this.xhr.response);
+      submitBtn.addEventListener('click', event => {
+        event.preventDefault();
 
-        if(this.xhr.status == 200) {
-          taskNameNode.textContent = newName;
-        } else {
-          alert('Error: name ' + response.name);
-        }
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', '/signin');
+        xhr.setRequestHeader('Content-type', 'application/json', 'charset=utf-8');
+        const payload = JSON.stringify({ user: { email: email.value, password: password.value } });
+        xhr.send(payload);
+
+        xhr.addEventListener('load', (e) => {
+          const response = JSON.parse(xhr.response);
+          if(response.auth_token) {
+            document.cookie = `Authorization=${response.auth_token}; path=/`;
+            hideElement(signinWindow, 'show');
+            updateLinksAndButtons();
+          } else { alert('invalid email or/and password'); }
+        });
       });
     }
   }
 
-  // loads all existing projects related to the existing user from DB
-  const loadAllRequst = new ProjectRequest('GET', '/projects');
-  loadAllRequst.send();
-  loadAllRequst.loadProjects();
-
-
-  // this function is used to extract some id from CSS seletor(id), for example,
-  // from 'project_1234' to '1234' which is used for further async requests to DB.
-  function extractId(prefix, selector) {
-    return selector.replace(`${prefix}_`, '');
-  }
+  // signout
+  // if a user clicks on 'Signout' reference then browser cleanes all cookies
+  // const signoutLink = document.querySelector('#signout-link');
+  signOutLink.addEventListener('click', (e) => {
+    e.preventDefault();
+    const result = confirm('Are you sure want to exit?');
+    if(result) {
+      document.cookie = 'Authorization=; path=/';
+      workspace.innerHTML = '';
+      updateLinksAndButtons();
+    }
+  });
 });
