@@ -47,6 +47,7 @@ class Task {
   }
   // sets listeners to interact with a task item (click on destroy and edit task)
   setCommonTaskItemListeners() {
+    if (!this.projectId) { this.projectId = extractId('project', this.taskItem.parentNode.parentNode.id); }
     this.setRemoveTaskListener();
     this.setEditTaskListener();
     this.setMarkCompleteListener();
@@ -91,7 +92,6 @@ class Task {
     taskCheckbox.addEventListener('change', (e) => {
       const isChecked = e.target.checked;
       const taskId = extractId('task', this.taskItem.id);
-      console.log(`${this.projectId}!!!!`);
 
       const request = new TaskRequest('PATCH', `/projects/${this.projectId}/tasks/${taskId}`);
       const taskStatus = isChecked ? 'done' : 'undone';
