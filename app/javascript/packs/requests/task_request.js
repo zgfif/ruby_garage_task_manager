@@ -26,7 +26,7 @@ class TaskRequest {
       function renderTaskElements(tasks) {
         tasks.forEach(task => {
           // render tasks items on page
-          const taskItem = new Task(targetPlace, task.name, task.id, projectId);
+          const taskItem = new Task(targetPlace, task.name, task.id, projectId, task.status);
           taskItem.populateNewTaskItem();
           taskItem.addToTasksArea();
           taskItem.setCommonTaskItemListeners();

@@ -5,17 +5,18 @@ import { extractId } from '../selector_helper';
 import { TaskRequest } from '../requests/task_request';
 
 class Task {
-  constructor(tasksArea, taskName, taskId, projectId) {
+  constructor(tasksArea, taskName, taskId, projectId, taskStatus) {
     this.tasksArea = tasksArea;
     this.taskName = taskName;
     this.taskItem = document.createElement('div');
     this.taskItem.classList.add('task-item');
     this.taskItem.id = `task_${taskId}`;
     this.projectId = projectId;
+    this.taskStatus = taskStatus == 'done' ? 'checked' : '' ;
   }
 
   populateNewTaskItem() {
-    this.taskItem.innerHTML = `<div class="task-completing"><input type="checkbox"></div>
+    this.taskItem.innerHTML = `<div class="task-completing"><input type="checkbox" ${this.taskStatus}></div>
                              <div class="task-name">${this.taskName}</div>
                              <div class="task-actions">
                                  <div data-move class="action-icon">
@@ -48,6 +49,7 @@ class Task {
   setCommonTaskItemListeners() {
     this.setRemoveTaskListener();
     this.setEditTaskListener();
+    this.setMarkCompleteListener();
   }
 
   // sets the listener that removes the task on click the 'trash' icon
@@ -76,10 +78,26 @@ class Task {
         if (newTaskName && newTaskName != '') {
           const taskId = extractId('task', this.taskItem.id); // example: from 'task_555' to '555'
           const request = new TaskRequest('PATCH', `/projects/${this.projectId}/tasks/${taskId}`);
-          request.send({ task: { name: newTaskName} });
+          request.send({ task: { name: newTaskName } });
           request.handleUpdating(taskNameNode, newTaskName); // updates corresponding task element on page if the task was successfully updated in DB
         }
       });
+  }
+
+ // listener for checkbox of each task
+  setMarkCompleteListener() {
+    const taskCheckbox = this.taskItem.querySelector('.task-completing input');
+
+    taskCheckbox.addEventListener('change', (e) => {
+      const isChecked = e.target.checked;
+      const taskId = extractId('task', this.taskItem.id);
+      console.log(`${this.projectId}!!!!`);
+
+      const request = new TaskRequest('PATCH', `/projects/${this.projectId}/tasks/${taskId}`);
+      const taskStatus = isChecked ? 'done' : 'undone';
+      const payload = { task: { status: taskStatus } };
+      request.send(payload);
+    });
   }
 }
 
