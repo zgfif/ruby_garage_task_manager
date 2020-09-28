@@ -56,7 +56,6 @@ window.addEventListener('DOMContentLoaded', () => {
   // sets the listener that creates TODO list window on click the 'Add TODO list' button
   function listenNewListButton(button) {
     button.addEventListener('click', () => {
-
       const listName = prompt('Enter the name of list');
 
       if(listName && listName != '') {
