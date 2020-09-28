@@ -122,4 +122,8 @@ Rails.application.configure do
   # DatabaseSelector::Resolver
   # config.active_record.database_resolver_context = ActiveRecord::Middleware::
   # DatabaseSelector::Resolver::Session
+
+  # changes for images on heroku
+  config.assets.compile = true
+  config.assets.digest = true
 end
