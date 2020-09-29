@@ -32,6 +32,7 @@ class AuthorizeApiRequest
   end
 
   def auth_header
+    p headers['Authorization']
     headers['Authorization']
   end
 end
