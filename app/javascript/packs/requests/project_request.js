@@ -1,6 +1,6 @@
 'use strict';
 
-// import { cookieObject } from '../cookie_helper';
+import { cookieObject } from '../cookie_helper';
 import { TodoWindow } from '../elements/todo_window';
 import { TaskRequest } from './task_request';
 // CRUD functions for Project
@@ -9,9 +9,7 @@ class ProjectRequest {
      this.xhr = new XMLHttpRequest();
      this.xhr.open(method, path);
      this.xhr.setRequestHeader('Content-type', 'application/json', 'charset=utf-8');
-     console.log(this.cookieObject(document.cookie).Authorization);
-     this.xhr.setRequestHeader('Authorization', this.cookieObject(document.cookie).Authorization);
-     // console.log()
+     this.xhr.setRequestHeader('Authorization', cookieObject().Authorization);
   }
 
   send(data = null) {
@@ -24,7 +22,6 @@ class ProjectRequest {
        const projects = JSON.parse(this.xhr.response);
 
        if(!projects.error) { renderProjectElements(workspace, projects); }
-
     });
 
     function renderProjectElements(workspace, projects) {
@@ -78,18 +75,6 @@ class ProjectRequest {
     this.xhr.addEventListener('load', () => {
       if(this.xhr.status == 204) { projectNode.remove(); }
     });
-  }
-
-  // extract string cookies to js object
-  cookieObject(cookies) {
-    let obj = {};
-    // let cookies = document.cookie;
-    cookies = cookies.split('; ');
-    cookies.forEach(item => {
-      item = item.split('=');
-      obj[item[0]] = item[1];
-    });
-    return obj;
   }
 }
 

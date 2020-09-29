@@ -16,15 +16,12 @@ class AuthorizeApiRequest
   attr_reader :headers
 
   def user
-    # p "#{decoded_auth_token} _______________"
     @user ||= User.find(decoded_auth_token[:user_id]) if decoded_auth_token
 
     @user || errors.add(:token, 'Invalid token') && nil
   end
 
   def decoded_auth_token
-    p "#{http_auth_header} !!!!!!!!!!!"
-    p "#{JsonWebToken.decode(http_auth_header)} &&&&&&&&&&&&&&&&&&&&&&&&&&"
     @decoded_auth_token ||= JsonWebToken.decode(http_auth_header)
   end
 
@@ -35,7 +32,6 @@ class AuthorizeApiRequest
   end
 
   def auth_header
-    p headers['Authorization']
     headers['Authorization']
   end
 end
