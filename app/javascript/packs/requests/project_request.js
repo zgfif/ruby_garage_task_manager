@@ -9,6 +9,7 @@ class ProjectRequest {
      this.xhr = new XMLHttpRequest();
      this.xhr.open(method, path);
      this.xhr.setRequestHeader('Content-type', 'application/json', 'charset=utf-8');
+     console.log(document.cookie);
      this.xhr.setRequestHeader('Authorization', this.cookieObject(document.cookie).Authorization);
   }
 
