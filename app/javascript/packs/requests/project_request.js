@@ -79,7 +79,7 @@ class ProjectRequest {
   }
 
   // extract string cookies to js object
-  function cookieObject() {
+  cookieObject() {
     let obj = {};
     let cookies = document.cookie;
     cookies = cookies.split('; ');
