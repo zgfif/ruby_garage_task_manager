@@ -9,7 +9,7 @@ class ProjectRequest {
      this.xhr = new XMLHttpRequest();
      this.xhr.open(method, path);
      this.xhr.setRequestHeader('Content-type', 'application/json', 'charset=utf-8');
-     this.xhr.setRequestHeader('Authorization', this.cookieObject().Authorization);
+     this.xhr.setRequestHeader('Authorization', this.cookieObject(document.cookie).Authorization);
   }
 
   send(data = null) {
@@ -79,9 +79,9 @@ class ProjectRequest {
   }
 
   // extract string cookies to js object
-  cookieObject() {
+  cookieObject(cookies) {
     let obj = {};
-    let cookies = document.cookie;
+    // let cookies = document.cookie;
     cookies = cookies.split('; ');
     cookies.forEach(item => {
       item = item.split('=');
