@@ -24,6 +24,7 @@ class AuthorizeApiRequest
 
   def decoded_auth_token
     p "#{http_auth_header} !!!!!!!!!!!"
+    p "#{JsonWebToken.decode(http_auth_header)} &&&&&&&&&&&&&&&&&&&&&&&&&&"
     @decoded_auth_token ||= JsonWebToken.decode(http_auth_header)
   end
 
