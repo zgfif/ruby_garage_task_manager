@@ -22,7 +22,6 @@ class ProjectRequest {
        const projects = JSON.parse(this.xhr.response);
 
        if(!projects.error) { renderProjectElements(workspace, projects); }
-
     });
 
     function renderProjectElements(workspace, projects) {

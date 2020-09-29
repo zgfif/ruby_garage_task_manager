@@ -122,4 +122,11 @@ Rails.application.configure do
   # DatabaseSelector::Resolver
   # config.active_record.database_resolver_context = ActiveRecord::Middleware::
   # DatabaseSelector::Resolver::Session
+
+  # changes for images on heroku
+  config.assets.compile = true
+  config.assets.digest = true
+
+  # to receive RAILS_MASTER_KEY from production environment
+  config.require_master_key = true
 end

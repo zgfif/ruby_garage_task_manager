@@ -1,8 +1,9 @@
 'use strict';
 
-import { extractId } from '../selector_helper';
+
 import { ProjectRequest } from '../requests/project_request';
 import { TaskRequest } from '../requests/task_request';
+import { extractId } from '../selector_helper';
 
 class TodoWindow {
     constructor(targetPlace, listName, projectId) {
