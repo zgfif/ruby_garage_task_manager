@@ -13,11 +13,12 @@ class Task {
     this.taskItem.id = `task_${taskId}`;
     this.projectId = projectId;
     this.taskStatus = taskStatus == 'done' ? 'checked' : '' ;
+    this.taskItem.setAttribute('draggable', 'true');
   }
 
   populateNewTaskItem() {
     this.taskItem.innerHTML = `<div class="task-completing"><input type="checkbox" ${this.taskStatus}></div>
-                             <div class="task-name">${this.taskName}</div>
+                              <div class="task-name">${this.taskName}</div>
                              <div class="task-actions">
                                  <div data-move class="action-icon">
                                     <svg width="1.2em" height="1.2em" viewBox="0 0 16 16" class="bi bi-arrow-down-up" fill="grey" xmlns="http://www.w3.org/2000/svg">
@@ -80,7 +81,8 @@ class Task {
           const taskId = extractId('task', this.taskItem.id); // example: from 'task_555' to '555'
           const request = new TaskRequest('PATCH', `/projects/${this.projectId}/tasks/${taskId}`);
           request.send({ task: { name: newTaskName } });
-          request.handleUpdating(taskNameNode, newTaskName); // updates corresponding task element on page if the task was successfully updated in DB
+          // updates corresponding task element on page if the task was successfully updated in DB
+          request.handleUpdating(taskNameNode, newTaskName);
         }
       });
   }

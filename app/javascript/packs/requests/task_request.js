@@ -2,9 +2,9 @@
 
 import { cookieObject } from '../cookie_helper';
 import { Task } from '../elements/task';
+import { setDndListeners } from '../listeners/task_moving_listeners';
 
 // CRUD functions for Task
-
 class TaskRequest {
   constructor(method, path) {
     this.xhr = new XMLHttpRequest();
@@ -32,6 +32,7 @@ class TaskRequest {
           taskItem.setCommonTaskItemListeners();
         });
       }
+      setDndListeners(targetPlace);
    });
   }
 

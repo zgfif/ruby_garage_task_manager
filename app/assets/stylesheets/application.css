@@ -104,11 +104,16 @@
      border-bottom-left-radius: 20px;
      border-bottom-right-radius: 20px;
      background-color: #ffffe6;
+     /* cursor: move; */
  }
 
  .task-item:hover .task-actions {
      visibility: visible;
  }
+
+ /* .task-item.over {
+   border: 2px dotted #666;
+ } */
 
  .window-header:hover .header-right-content {
      visibility: visible;
@@ -158,7 +163,7 @@
  }
 
 
- #add-task-input {
+ .add-task-input {
      margin-top: 18px;
      color: grey;
      font-size: 1.5em;
@@ -233,6 +238,10 @@
      display: flex;
      padding: 0 5px;
  }
+
+ /* .action-icon:first-of-type {
+   cursor: move;
+ } */
 
  .vll {
      margin-left: 5px;

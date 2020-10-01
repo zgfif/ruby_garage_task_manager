@@ -3,6 +3,7 @@
 import { cookieObject } from '../cookie_helper';
 import { TodoWindow } from '../elements/todo_window';
 import { TaskRequest } from './task_request';
+
 // CRUD functions for Project
 class ProjectRequest {
   constructor(method, path) {

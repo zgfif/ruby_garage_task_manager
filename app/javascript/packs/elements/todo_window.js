@@ -1,6 +1,5 @@
 'use strict';
 
-
 import { ProjectRequest } from '../requests/project_request';
 import { TaskRequest } from '../requests/task_request';
 import { extractId } from '../selector_helper';
@@ -53,7 +52,7 @@ class TodoWindow {
                                  <svg xmlns="http://www.w3.org/2000/svg" width="2em" height="2em" fill="#00b386" viewBox="0 0 24 24"><path d="M24 10h-10v-10h-4v10h-10v4h10v10h4v-10h10z"/></svg>
                              </div>
                              <div class="input-area">
-                                 <input id="add-task-input" type="text" placeholder="Start typing here to create a task...">
+                                 <input class="add-task-input" type="text" placeholder="Start typing here to create a task...">
                              </div>
                              <div class="add-task-button">
                                  <button id="btn-add-task">Add Task</button>
@@ -91,7 +90,7 @@ class TodoWindow {
     // sets the listener that creates a new task after click "Add Task" button
     setAddTaskListener() {
       const addTaskBtn = this.newWindow.querySelector('#btn-add-task'),
-            inputTask = this.newWindow.querySelector('#add-task-input'),
+            inputTask = this.newWindow.querySelector('.add-task-input'),
             tasksNode = this.newWindow.querySelector('.window-task-list');
 
       addTaskBtn.addEventListener('click', () => {
