@@ -1,9 +1,10 @@
 // 'use strict';
-import { extractId } from '../selector_helper';
+
 import { TaskRequest } from '../requests/task_request';
+import { setBasicTaskListeners } from './tasks_listeners';
 
 function setDndListeners(dragArea) {
-  var dragSrcEl = null;
+  let dragSrcEl = null;
 
   function handleDragStart(e) {
     // Target (this) element is the source node.
@@ -44,71 +45,28 @@ function setDndListeners(dragArea) {
   function handleDragEnd(e) {
     this.style.opacity = '1';
     // this/e.target is the source node.
-    [].forEach.call(cols, function (col) {
-        setEditTaskListener(col);
-        setRemoveTaskListener(col);
-        setMarkCompleteListener(col);
+    [].forEach.call(tasks, function (task) {
+        setBasicTaskListeners(task);
     });
   }
+  // replace each task with corresponding copy to get rid of existing listeners
+  let tasks = dragArea.querySelectorAll('.task-item');
 
-  var cols = dragArea.querySelectorAll('.task-item');
+  tasks.forEach(task => {
+    let clonedTask = task.cloneNode(true);
+    task.parentNode.replaceChild(clonedTask, task);
+  });
 
-  [].forEach.call(cols, function (col) {
-    col.addEventListener('dragstart', handleDragStart, false);
-    col.addEventListener('dragover', handleDragOver, false);
-    col.addEventListener('drop', handleDrop, false);
-    col.addEventListener('dragend', handleDragEnd, false);
+  tasks = dragArea.querySelectorAll('.task-item');
+
+// set draggable listeners to each task
+  [].forEach.call(tasks, function (task) {
+    setBasicTaskListeners(task);
+    task.addEventListener('dragstart', handleDragStart, false);
+    task.addEventListener('dragover', handleDragOver, false);
+    task.addEventListener('drop', handleDrop, false);
+    task.addEventListener('dragend', handleDragEnd, false);
   });
 }
-
-
-function setEditTaskListener(taskRow) {
-    const editIcon = taskRow.querySelector('[data-edit]'),
-          taskNameNode = taskRow.querySelector('.task-name');
-
-    editIcon.addEventListener('click', () => {
-      const newTaskName = prompt('You can change the name of task', taskNameNode.textContent);
-      if (newTaskName && newTaskName != '') {
-        const taskId = extractId('task', taskRow.id); // example: from 'task_555' to '555'
-        const projectId = extractId('project', taskRow.parentNode.parentNode.id);
-        const request = new TaskRequest('PATCH', `/projects/${projectId}/tasks/${taskId}`);
-        request.send({ task: { name: newTaskName } });
-        // updates corresponding task element on page if the task was successfully updated in DB
-        request.handleUpdating(taskNameNode, newTaskName);
-      }
-    });
-}
-
-function setRemoveTaskListener(taskRow) {
-      const trashIcon = taskRow.querySelector('[data-remove]'),
-            taskName = taskRow.querySelector('.task-name').textContent;
-
-      trashIcon.addEventListener('click', () => {
-        const really = confirm(`Are you really want to remove ${taskName}?`);
-        if (really) {
-          const taskId = extractId('task', taskRow.id); // example: from 'task_555' to '555'
-          const projectId = extractId('project', taskRow.parentNode.parentNode.id);
-          // builds the request to delete certain task
-          const request = new TaskRequest('DELETE', `/projects/${projectId}/tasks/${taskId}`);
-          request.send();
-          // removes corresponding task element on page if the task was successfully destroyed in DB
-          request.handleDestroying(taskRow);
-        }
-      });
-  }
-
-  function setMarkCompleteListener(taskRow) {
-    const taskCheckbox = taskRow.querySelector('.task-completing input');
-
-    taskCheckbox.addEventListener('change', (e) => {
-      const isChecked = e.target.checked;
-      const taskId = extractId('task', taskRow.id);
-      const projectId = extractId('project', taskRow.parentNode.parentNode.id);
-      const request = new TaskRequest('PATCH', `/projects/${projectId}/tasks/${taskId}`);
-      const taskStatus = isChecked ? 'done' : 'undone';
-      const payload = { task: { status: taskStatus } };
-      request.send(payload);
-    });
-  }
 
 export { setDndListeners };

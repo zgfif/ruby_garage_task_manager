@@ -32,6 +32,8 @@ class TaskRequest {
           taskItem.setCommonTaskItemListeners();
         });
       }
+      // After loaading all related to the project tasks we set draggable
+      // listeners to each task in tasksArea.
       setDndListeners(targetPlace);
    });
   }
@@ -46,6 +48,8 @@ class TaskRequest {
          newTask.addToTasksArea();
          newTask.setCommonTaskItemListeners();
          inputTask.value = '';
+         // After appearing a new task, the tasks draggable area should be recalculated.
+         setDndListeners(tasksNode);
        } else {
           alert('Error: name ' + response.name);
        }
@@ -60,7 +64,7 @@ class TaskRequest {
     });
   }
 
-  handleUpdating(taskNameNode, newName) {
+  handleNameUpdating(taskNameNode, newName) {
     this.xhr.addEventListener('load', () => {
       const response = JSON.parse(this.xhr.response);
 

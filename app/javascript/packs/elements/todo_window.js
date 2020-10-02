@@ -118,7 +118,7 @@ class TodoWindow {
 
             const projectData = { project: { name: newTodoListName } };
             updateRequest.send(projectData);
-            updateRequest.handleEditing(newTodoListName, todoListTitleNode);
+            updateRequest.handleNameUpdating(newTodoListName, todoListTitleNode);
           }
         });
     }

@@ -61,7 +61,7 @@ class ProjectRequest {
     });
   }
 
-  handleEditing(projectNewName, titleNode) {
+  handleNameUpdating(projectNewName, titleNode) {
     this.xhr.addEventListener('load', () => {
        const result = JSON.parse(this.xhr.response);
        if(this.xhr.status == 200) {

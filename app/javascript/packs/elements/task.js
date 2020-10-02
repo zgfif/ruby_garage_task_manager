@@ -1,8 +1,8 @@
 'use strict';
 
-import { extractId } from '../selector_helper';
-
 import { TaskRequest } from '../requests/task_request';
+
+import { setBasicTaskListeners } from '../listeners/tasks_listeners';
 
 class Task {
   constructor(tasksArea, taskName, taskId, projectId, taskStatus) {
@@ -46,60 +46,10 @@ class Task {
   addToTasksArea() {
     this.tasksArea.append(this.taskItem);
   }
+
   // sets listeners to interact with a task item (click on destroy and edit task)
   setCommonTaskItemListeners() {
-    if (!this.projectId) { this.projectId = extractId('project', this.taskItem.parentNode.parentNode.id); }
-    this.setRemoveTaskListener();
-    this.setEditTaskListener();
-    this.setMarkCompleteListener();
-  }
-
-  // sets the listener that removes the task on click the 'trash' icon
-  setRemoveTaskListener() {
-      const trashIcon = this.taskItem.querySelector('[data-remove]'),
-            taskName = this.taskItem.querySelector('.task-name').textContent;
-
-      trashIcon.addEventListener('click', () => {
-        const really = confirm(`Are you really want to remove ${taskName}?`);
-        if (really) {
-          const taskId = extractId('task', this.taskItem.id); // example: from 'task_123' to '123'
-          const request = new TaskRequest('DELETE', `/projects/${this.projectId}/tasks/${taskId}`); // builds the request to delete certain task
-          request.send();
-          request.handleDestroying(this.taskItem); // removes corresponding task element on page if the task was successfully destroyed in DB
-        }
-      });
-  }
-
-  // sets the listener that edits the task's name on click on the 'edit' icon
-  setEditTaskListener() {
-      const editIcon = this.taskItem.querySelector('[data-edit]'),
-            taskNameNode = this.taskItem.querySelector('.task-name');
-
-      editIcon.addEventListener('click', () => {
-        const newTaskName = prompt('You can change the name of task', taskNameNode.textContent);
-        if (newTaskName && newTaskName != '') {
-          const taskId = extractId('task', this.taskItem.id); // example: from 'task_555' to '555'
-          const request = new TaskRequest('PATCH', `/projects/${this.projectId}/tasks/${taskId}`);
-          request.send({ task: { name: newTaskName } });
-          // updates corresponding task element on page if the task was successfully updated in DB
-          request.handleUpdating(taskNameNode, newTaskName);
-        }
-      });
-  }
-
- // listener for checkbox of each task
-  setMarkCompleteListener() {
-    const taskCheckbox = this.taskItem.querySelector('.task-completing input');
-
-    taskCheckbox.addEventListener('change', (e) => {
-      const isChecked = e.target.checked;
-      const taskId = extractId('task', this.taskItem.id);
-
-      const request = new TaskRequest('PATCH', `/projects/${this.projectId}/tasks/${taskId}`);
-      const taskStatus = isChecked ? 'done' : 'undone';
-      const payload = { task: { status: taskStatus } };
-      request.send(payload);
-    });
+    setBasicTaskListeners(this.taskItem);
   }
 }
 
