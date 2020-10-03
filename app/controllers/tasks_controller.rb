@@ -2,7 +2,7 @@
 
 class TasksController < ApplicationController
   def index
-    render json: project.tasks, status: :ok
+    render json: project.tasks.order(priority: :asc), status: :ok
   end
 
   def create
