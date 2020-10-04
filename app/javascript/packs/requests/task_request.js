@@ -3,6 +3,7 @@
 import { cookieObject } from '../cookie_helper';
 import { Task } from '../elements/task';
 import { setDndListeners } from '../listeners/task_moving_listeners';
+import { extractId } from '../selector_helper';
 
 // CRUD functions for Task
 class TaskRequest {
@@ -26,7 +27,7 @@ class TaskRequest {
       function renderTaskElements(tasks) {
         tasks.forEach(task => {
           // render tasks items on page
-          const taskItem = new Task(targetPlace, task.name, task.id, projectId, task.status);
+          const taskItem = new Task(targetPlace, task.name, task.id, projectId, task.status, task.priority);
           taskItem.populateNewTaskItem();
           taskItem.addToTasksArea();
           taskItem.setCommonTaskItemListeners();
@@ -43,7 +44,8 @@ class TaskRequest {
        const response = JSON.parse(this.xhr.response);
        // render task item on page if the new task was saved to db
        if(this.xhr.status == 201) {
-         const newTask = new Task(tasksNode, response.name, response.id);
+         const projectId = extractId('project', tasksNode.parentNode.id),
+               newTask = new Task(tasksNode, response.name, response.id, projectId, response.status, response.priority);
          newTask.populateNewTaskItem();
          newTask.addToTasksArea();
          newTask.setCommonTaskItemListeners();
@@ -73,6 +75,12 @@ class TaskRequest {
       } else {
         alert('Error: name ' + response.name);
       }
+    });
+  }
+
+  handlePriorityUpdating() {
+    this.xhr.addEventListener('load', () => {
+      if(this.xhr.status != 200) { alert('Error ' + this.xhr.response); }
     });
   }
 }

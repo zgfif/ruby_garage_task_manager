@@ -34,9 +34,9 @@ class ProjectRequest {
         projectWindow.setCommonWindowListeners();
 
         // load all tasks related to the project
-        const targetPlace = workspace.querySelector(`#project_${project.id} .window-task-list`);
+        const targetPlace = workspace.querySelector(`#project_${project.id} .window-task-list`),
+              tasks = new TaskRequest('GET', `/projects/${project.id}/tasks`);
 
-        const tasks = new TaskRequest('GET', `/projects/${project.id}/tasks`);
         tasks.send();
         tasks.loadTasks(targetPlace, project.id);
       });

@@ -1,6 +1,7 @@
 'use strict';
 
-import { extractId } from '../selector_helper';
+// import { extractId } from '../selector_helper';
+import { getProjectId, getTaskId } from '../helpers/task_helpers';
 import { TaskRequest } from '../requests/task_request';
 
 
@@ -18,9 +19,9 @@ function setEditTaskNameListener(taskRow) {
     editIcon.addEventListener('click', () => {
       const newTaskName = prompt('You can change the name of task', taskNameNode.textContent);
       if (newTaskName && newTaskName != '') {
-        const taskId = getTaskId(taskRow);
-        const projectId = getProjectId(taskRow);
-        const request = new TaskRequest('PATCH', `/projects/${projectId}/tasks/${taskId}`);
+        const taskId = getTaskId(taskRow),
+              projectId = getProjectId(taskRow),
+              request = new TaskRequest('PATCH', `/projects/${projectId}/tasks/${taskId}`);
         request.send({ task: { name: newTaskName } });
         // updates corresponding task element on page if the task was successfully updated in DB
         request.handleNameUpdating(taskNameNode, newTaskName);
@@ -33,12 +34,12 @@ function setMarkCompleteTaskListener(taskRow) {
     const taskCheckbox = taskRow.querySelector('.task-completing input');
 
     taskCheckbox.addEventListener('change', (e) => {
-      const isChecked = e.target.checked;
-      const taskId = getTaskId(taskRow);
-      const projectId = getProjectId(taskRow);
-      const request = new TaskRequest('PATCH', `/projects/${projectId}/tasks/${taskId}`);
-      const taskStatus = isChecked ? 'done' : 'undone';
-      const payload = { task: { status: taskStatus } };
+      const isChecked = e.target.checked,
+            taskId = getTaskId(taskRow),
+            projectId = getProjectId(taskRow),
+            request = new TaskRequest('PATCH', `/projects/${projectId}/tasks/${taskId}`),
+            taskStatus = isChecked ? 'done' : 'undone' ,
+            payload = { task: { status: taskStatus } };
       request.send(payload);
     });
 }
@@ -51,27 +52,16 @@ function setRemoveTaskListener(taskRow) {
       trashIcon.addEventListener('click', () => {
         const really = confirm(`Are you really want to remove ${taskName}?`);
         if(really) {
-          const taskId = getTaskId(taskRow);
-          const projectId = getProjectId(taskRow);
-          // builds the request to delete certain task
-          const request = new TaskRequest('DELETE', `/projects/${projectId}/tasks/${taskId}`);
+          const taskId = getTaskId(taskRow),
+                projectId = getProjectId(taskRow),
+                // builds the request to delete certain task
+                request = new TaskRequest('DELETE', `/projects/${projectId}/tasks/${taskId}`);
           request.send();
           // removes corresponding task element on page if the task was successfully destroyed in DB
           request.handleDestroying(taskRow);
         }
       });
   }
-
-
-// retrieve related to task the project_id
-function getProjectId(taskRow) {
-  return extractId('project', taskRow.parentNode.parentNode.id);
-}
-
-// retrieve the task_id of the task_element
-function getTaskId(taskRow) {
-  return extractId('task', taskRow.id);
-}
 
 
 export { setBasicTaskListeners };

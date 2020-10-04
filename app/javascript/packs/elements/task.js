@@ -5,7 +5,7 @@ import { TaskRequest } from '../requests/task_request';
 import { setBasicTaskListeners } from '../listeners/tasks_listeners';
 
 class Task {
-  constructor(tasksArea, taskName, taskId, projectId, taskStatus) {
+  constructor(tasksArea, taskName, taskId, projectId, taskStatus, taskPriority = null) {
     this.tasksArea = tasksArea;
     this.taskName = taskName;
     this.taskItem = document.createElement('div');
@@ -14,6 +14,7 @@ class Task {
     this.projectId = projectId;
     this.taskStatus = taskStatus == 'done' ? 'checked' : '' ;
     this.taskItem.setAttribute('draggable', 'true');
+    this.taskItem.setAttribute('priority', taskPriority);
   }
 
   populateNewTaskItem() {
