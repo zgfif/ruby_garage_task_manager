@@ -37,6 +37,8 @@ group :development, :test do
   # console
   gem 'byebug', platforms: %i[mri mingw x64_mingw]
   gem 'factory_bot_rails'
+
+  gem 'awesome_print'
 end
 
 group :development do

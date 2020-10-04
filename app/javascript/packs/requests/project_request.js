@@ -3,6 +3,7 @@
 import { cookieObject } from '../cookie_helper';
 import { TodoWindow } from '../elements/todo_window';
 import { TaskRequest } from './task_request';
+
 // CRUD functions for Project
 class ProjectRequest {
   constructor(method, path) {
@@ -33,9 +34,9 @@ class ProjectRequest {
         projectWindow.setCommonWindowListeners();
 
         // load all tasks related to the project
-        const targetPlace = workspace.querySelector(`#project_${project.id} .window-task-list`);
+        const targetPlace = workspace.querySelector(`#project_${project.id} .window-task-list`),
+              tasks = new TaskRequest('GET', `/projects/${project.id}/tasks`);
 
-        const tasks = new TaskRequest('GET', `/projects/${project.id}/tasks`);
         tasks.send();
         tasks.loadTasks(targetPlace, project.id);
       });
@@ -60,7 +61,7 @@ class ProjectRequest {
     });
   }
 
-  handleEditing(projectNewName, titleNode) {
+  handleNameUpdating(projectNewName, titleNode) {
     this.xhr.addEventListener('load', () => {
        const result = JSON.parse(this.xhr.response);
        if(this.xhr.status == 200) {

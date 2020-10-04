@@ -53,4 +53,26 @@ RSpec.describe Task, type: :model do
       expect(subject.status).to eq('undone')
     end
   end
+
+  context 'priorities' do
+    let!(:first_task) { create(:task, project: project) }
+
+    it 'should has the priority equal to 1' do
+      expect(first_task.priority).to eq(1)
+    end
+
+    it 'should increase priority to 2' do
+      second_task = create(:task, project: project)
+      expect(second_task.priority).to eq(2)
+    end
+
+    it 'should be recalculated after destroying a task' do
+      second_task = create(:task, project: project)
+      first_task.destroy
+      last_task = project.tasks.last
+
+      expect(last_task.name).to eq(second_task.name)
+      expect(last_task.priority).to eq(1)
+    end
+  end
 end

@@ -1,7 +1,6 @@
 'use strict';
 
-import { cookieObject, isSignIn } from './cookie_helper';
-import { extractId } from './selector_helper';
+import { isSignIn } from './cookie_helper';
 import { hideElement, showElement } from './show_helpers';
 import { ProjectRequest } from './requests/project_request';
 

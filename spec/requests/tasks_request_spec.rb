@@ -17,9 +17,9 @@ RSpec.describe 'Tasks', type: :request do
   end
 
   context 'receive all tasks' do
-    let(:second_user) { create(:user) }
-    let(:second_project) { create(:project, user: second_user) }
-    let(:some_task) { create(:task, project: second_project) }
+    let!(:second_user) { create(:user) }
+    let!(:second_project) { create(:project, user: second_user) }
+    let!(:first_task) { create(:task, project: second_project) }
 
     it 'should return only related to current user tasks' do
       get "/projects/#{project.id}/tasks"
@@ -27,12 +27,16 @@ RSpec.describe 'Tasks', type: :request do
       ids = response_body.map { |el| el['id'] }
       tasks_ids = tasks.map(&:id)
 
-      expect(ids).to_not include(some_task.id)
+      expect(ids).to_not include(first_task.id)
       expect(ids).to eq(tasks_ids)
     end
 
     it 'should return 3 tasks' do
       get "/projects/#{project.id}/tasks"
+      # validates the order of tasks
+      expect(response_body[0]['id']).to eq(tasks.first.id)
+      expect(response_body[1]['id']).to eq(tasks.second.id)
+      expect(response_body[2]['id']).to eq(tasks.third.id)
 
       expect(response_body.count).to eq(3)
       expect(response.status).to eq(200)
