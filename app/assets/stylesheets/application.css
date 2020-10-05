@@ -242,6 +242,13 @@
  /* .action-icon:first-of-type {
    cursor: move;
  } */
+ div[data-deadline] {
+   padding-right: 7px;
+   height: 1.2em;
+   width: 1.2em;
+   background-image: url('monthly-calendar.svg');
+   background-repeat: no-repeat;
+ }
 
  .vll {
      margin-left: 5px;
