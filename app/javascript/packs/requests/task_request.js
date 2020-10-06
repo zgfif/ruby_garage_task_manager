@@ -83,6 +83,13 @@ class TaskRequest {
       if(this.xhr.status != 200) { alert('Error ' + this.xhr.response); }
     });
   }
+
+  handleDeadlineUpdating(targetCalendar) {
+    this.xhr.addEventListener('load', () => {
+      if(this.xhr.status != 200) { alert('Error ' + this.xhr.response); } else { targetCalendar.remove(); }
+
+    });
+  }
 }
 
 export { TaskRequest };

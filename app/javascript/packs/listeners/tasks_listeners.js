@@ -1,14 +1,15 @@
 'use strict';
 
-// import { extractId } from '../selector_helper';
 import { getProjectId, getTaskId } from '../helpers/task_helpers';
 import { TaskRequest } from '../requests/task_request';
+import { processCalendar } from '../elements/calendar_element';
 
 
 function setBasicTaskListeners(taskElement) {
   setEditTaskNameListener(taskElement);
   setMarkCompleteTaskListener(taskElement);
   setRemoveTaskListener(taskElement);
+  setOpenCalendarListener(taskElement);
 }
 
 // sets the listener to edit the name of the task
@@ -63,5 +64,12 @@ function setRemoveTaskListener(taskRow) {
       });
   }
 
+// set the calendar icon listener(to set deadline of the task)
+function setOpenCalendarListener(taskRow) {
+  const calendarIcon = taskRow.querySelector('[data-deadline]');
+  calendarIcon.addEventListener('click', () => {
+    if (!document.querySelector('.calendar-window')) { processCalendar(taskRow, calendarIcon); }
+  });
+}
 
 export { setBasicTaskListeners };

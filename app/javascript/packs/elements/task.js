@@ -23,7 +23,7 @@ class Task {
                              <div class="task-actions">
                                  <div class="action-icon">
                                    <div data-deadline></div>
-                                   <div class="vll"></div>   
+                                   <div class="vll"></div>
                                  </div>
                                  <div data-move class="action-icon">
                                     <svg width="1.2em" height="1.2em" viewBox="0 0 16 16" class="bi bi-arrow-down-up" fill="grey" xmlns="http://www.w3.org/2000/svg">
