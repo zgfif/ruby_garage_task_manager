@@ -9,4 +9,13 @@ function convertDateToString(date = new Date()) {
   return `${year}-${month}-${day} ${hoursMinutesSeconds}`;
 }
 
-export { convertDateToString };
+
+function decorateDeadline(deadline) {
+    if(deadline) {
+      return deadline.substring(0, 10);
+    } else {
+      return '';
+    }
+  }
+
+export { convertDateToString, decorateDeadline };

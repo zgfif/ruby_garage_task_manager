@@ -304,11 +304,12 @@
   background-color: #FFFFFF;
   height: 500px;
   width: 700px;
-  padding: 20px;
-  position: absolute;
-  left: 50%;
+  position: fixed;
   top: 50%;
-  transform: translate(-50%, -50%);
+  left: 50%;
+  margin-top: -250px;
+  margin-left: -350px;
+  padding: 20px;
 }
 
 
@@ -337,4 +338,23 @@
 
 .auth-links {
   float: right;
+}
+
+.deadline-wrap {
+  position: relative;
+}
+.deadline-notice {
+  color: grey;
+  position: absolute;;
+  top: -40px;
+  left: -5px;
+  display: none;
+  text-align: center;
+  height: auto;
+  width: 160px;
+}
+
+.stop-scrolling {
+  height: 100%;
+  overflow: hidden;
 }

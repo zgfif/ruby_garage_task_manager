@@ -1,13 +1,14 @@
 'use strict';
 
 import { TaskRequest } from '../requests/task_request';
-
+import { decorateDeadline } from '../helpers/date_helper';
 import { setBasicTaskListeners } from '../listeners/tasks_listeners';
 
 class Task {
-  constructor(tasksArea, taskName, taskId, projectId, taskStatus, taskPriority = null) {
+  constructor(tasksArea, taskName, taskId, projectId, taskStatus, taskDeadline, taskPriority = null) {
     this.tasksArea = tasksArea;
     this.taskName = taskName;
+    this.taskDeadline = decorateDeadline(taskDeadline);
     this.taskItem = document.createElement('div');
     this.taskItem.classList.add('task-item');
     this.taskItem.id = `task_${taskId}`;
@@ -19,8 +20,11 @@ class Task {
 
   populateNewTaskItem() {
     this.taskItem.innerHTML = `<div class="task-completing"><input type="checkbox" ${this.taskStatus}></div>
-                              <div class="task-name">${this.taskName}</div>
+                              <div class="task-name"><p>${this.taskName}</p></div>
                              <div class="task-actions">
+                             <div class="deadline-wrap">
+                                <div class="deadline-notice">${this.taskDeadline}</div>
+                             </div>
                                  <div class="action-icon">
                                    <div data-deadline></div>
                                    <div class="vll"></div>

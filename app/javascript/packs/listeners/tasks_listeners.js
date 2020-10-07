@@ -2,8 +2,7 @@
 
 import { getProjectId, getTaskId } from '../helpers/task_helpers';
 import { TaskRequest } from '../requests/task_request';
-import { processCalendar } from '../elements/calendar_element';
-
+import { CalendarWindow } from '../elements/calendar_window';
 
 function setBasicTaskListeners(taskElement) {
   setEditTaskNameListener(taskElement);
@@ -68,7 +67,20 @@ function setRemoveTaskListener(taskRow) {
 function setOpenCalendarListener(taskRow) {
   const calendarIcon = taskRow.querySelector('[data-deadline]');
   calendarIcon.addEventListener('click', () => {
-    if (!document.querySelector('.calendar-window')) { processCalendar(taskRow, calendarIcon); }
+    if (!document.querySelector('.calendar-window')) {
+      const cw = new CalendarWindow(taskRow, calendarIcon);
+      cw.processCalendar();
+    }
+  });
+
+  calendarIcon.addEventListener('mouseover', () => {
+      const notice = taskRow.querySelector('.deadline-notice');
+      notice.style.display = 'block';
+  });
+
+  calendarIcon.addEventListener('mouseout', () => {
+      const notice = taskRow.querySelector('.deadline-notice');
+      notice.style.display = 'none';
   });
 }
 
