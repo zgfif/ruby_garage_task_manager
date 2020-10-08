@@ -11,6 +11,7 @@ class CalendarWindow {
   constructor(taskItem, calendarIcon) {
     this.taskItem = taskItem;
     this.icon = calendarIcon;
+    this.clearDeadlineBtn = this.buildClearButton();
   }
 
   processCalendar() {
@@ -74,7 +75,7 @@ class CalendarWindow {
     const projectId = getProjectId(this.taskItem),
           taskId = getTaskId(this.taskItem);
 
-    this.clearDeadline.addEventListener('click', () => {
+    this.clearDeadlineBtn.addEventListener('click', () => {
       if(!this.hasItDeadline()) { return; }
 
         const xhr = new TaskRequest('PATCH', `/projects/${projectId}/tasks/${taskId}`);
@@ -91,10 +92,15 @@ class CalendarWindow {
   }
 
   attachClearButton() {
-    this.clearDeadline = document.createElement('div');
-    this.clearDeadline.classList.add('clear-deadline-button');
-    this.clearDeadline.textContent = 'clear deadline';
-    this.calendarNode.append(this.clearDeadline);
+    this.calendarNode.append(this.clearDeadlineBtn);
+    this.setClearDeadlineListener();
+  }
+
+  buildClearButton() {
+    const cb = document.createElement('div');
+    cb.classList.add('clear-deadline-button');
+    cb.textContent = 'clear deadline';
+    return cb;
   }
 }
 
