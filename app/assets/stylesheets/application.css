@@ -201,7 +201,7 @@
 
  .task-item {
      display: flex;
-     min-height: 75px;
+     min-height: 85px;
      border-top: 2px solid grey;
 
  }
@@ -242,6 +242,13 @@
  /* .action-icon:first-of-type {
    cursor: move;
  } */
+ div[data-deadline] {
+   padding-right: 7px;
+   height: 1.2em;
+   width: 1.2em;
+   background-image: url('monthly-calendar.svg');
+   background-repeat: no-repeat;
+ }
 
  .vll {
      margin-left: 5px;
@@ -292,6 +299,19 @@
   transform: translate(-50%, -50%);
 }
 
+.calendar-window {
+  display: block;
+  background-color: #FFFFFF;
+  height: 500px;
+  width: 700px;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  margin-top: -250px;
+  margin-left: -350px;
+  padding: 20px;
+}
+
 
 .show {
   display: block;
@@ -318,4 +338,39 @@
 
 .auth-links {
   float: right;
+}
+
+.deadline-wrap {
+  position: relative;
+}
+.deadline-notice {
+  color: grey;
+  position: absolute;;
+  top: -40px;
+  left: -5px;
+  display: none;
+  text-align: center;
+  height: auto;
+  width: 160px;
+}
+
+.stop-scrolling {
+  height: 100%;
+  overflow: hidden;
+}
+
+.clear-deadline-button {
+  padding-top: 2px;
+  text-align: center;
+  float: right;
+  color: grey;
+  background-color: white;
+  height: 20px;
+  width: 180px;
+  border: 1px solid grey;
+}
+
+.clear-deadline-button:hover {
+  color: white;
+  background-color: grey;
 }

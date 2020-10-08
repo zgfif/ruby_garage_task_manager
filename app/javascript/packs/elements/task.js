@@ -1,13 +1,14 @@
 'use strict';
 
 import { TaskRequest } from '../requests/task_request';
-
+import { decorateDeadline } from '../helpers/date_helper';
 import { setBasicTaskListeners } from '../listeners/tasks_listeners';
 
 class Task {
-  constructor(tasksArea, taskName, taskId, projectId, taskStatus, taskPriority = null) {
+  constructor(tasksArea, taskName, taskId, projectId, taskStatus, taskDeadline, taskPriority = null) {
     this.tasksArea = tasksArea;
     this.taskName = taskName;
+    this.taskDeadline = decorateDeadline(taskDeadline);
     this.taskItem = document.createElement('div');
     this.taskItem.classList.add('task-item');
     this.taskItem.id = `task_${taskId}`;
@@ -19,8 +20,15 @@ class Task {
 
   populateNewTaskItem() {
     this.taskItem.innerHTML = `<div class="task-completing"><input type="checkbox" ${this.taskStatus}></div>
-                              <div class="task-name">${this.taskName}</div>
+                              <div class="task-name"><p>${this.taskName}</p></div>
                              <div class="task-actions">
+                             <div class="deadline-wrap">
+                                <div class="deadline-notice">${this.taskDeadline}</div>
+                             </div>
+                                 <div class="action-icon">
+                                   <div data-deadline></div>
+                                   <div class="vll"></div>
+                                 </div>
                                  <div data-move class="action-icon">
                                     <svg width="1.2em" height="1.2em" viewBox="0 0 16 16" class="bi bi-arrow-down-up" fill="grey" xmlns="http://www.w3.org/2000/svg">
                                      <path fill-rule="evenodd" d="M11.5 15a.5.5 0 0 0 .5-.5V2.707l3.146 3.147a.5.5 0 0 0 .708-.708l-4-4a.5.5 0 0 0-.708 0l-4 4a.5.5 0 1 0 .708.708L11 2.707V14.5a.5.5 0 0 0 .5.5zm-7-14a.5.5 0 0 1 .5.5v11.793l3.146-3.147a.5.5 0 0 1 .708.708l-4 4a.5.5 0 0 1-.708 0l-4-4a.5.5 0 0 1 .708-.708L4 13.293V1.5a.5.5 0 0 1 .5-.5z"/>
