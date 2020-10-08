@@ -5,6 +5,7 @@ import { Task } from '../elements/task';
 import { setDndListeners } from '../listeners/task_moving_listeners';
 import { extractId } from '../selector_helper';
 import { decorateDeadline } from '../helpers/date_helper';
+import { enableScroll } from '../helpers/scrolling';
 
 // CRUD functions for Task
 class TaskRequest {
@@ -93,6 +94,7 @@ class TaskRequest {
         const response = JSON.parse(this.xhr.response),
               deadlineNode = taskItem.querySelector('.deadline-notice');
         deadlineNode.innerHTML = decorateDeadline(response.deadline);
+        enableScroll();
         targetCalendar.remove();
       }
 

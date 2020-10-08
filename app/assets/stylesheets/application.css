@@ -201,7 +201,7 @@
 
  .task-item {
      display: flex;
-     min-height: 75px;
+     min-height: 85px;
      border-top: 2px solid grey;
 
  }
