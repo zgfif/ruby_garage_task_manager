@@ -358,3 +358,19 @@
   height: 100%;
   overflow: hidden;
 }
+
+.clear-deadline-button {
+  padding-top: 2px;
+  text-align: center;
+  float: right;
+  color: grey;
+  background-color: white;
+  height: 20px;
+  width: 180px;
+  border: 1px solid grey;
+}
+
+.clear-deadline-button:hover {
+  color: white;
+  background-color: grey;
+}

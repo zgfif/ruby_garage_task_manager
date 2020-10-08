@@ -17,6 +17,7 @@ class CalendarWindow {
     this.buildCalendar();
     this.showCalendar();
     this.setCloseCalendarListener();
+    this.setClearDeadlineListener();
   }
 
   buildCalendar() {
@@ -26,6 +27,8 @@ class CalendarWindow {
 
   showCalendar() {
     disableScroll();
+    if(this.hasItDeadline()) { this.attachClearButton(); }
+
     this.taskItem.append(this.calendarNode);
     this.calendarObject();
   }
@@ -65,6 +68,33 @@ class CalendarWindow {
 
   closeCalendar() {
     this.calendarNode.remove();
+  }
+
+  setClearDeadlineListener() {
+    const projectId = getProjectId(this.taskItem),
+          taskId = getTaskId(this.taskItem);
+
+    this.clearDeadline.addEventListener('click', () => {
+      if(!this.hasItDeadline()) { return; }
+
+        const xhr = new TaskRequest('PATCH', `/projects/${projectId}/tasks/${taskId}`);
+        xhr.send({ task: { deadline: null } });
+        xhr.handleDeadlineUpdating(this.calendarNode, this.taskItem);
+    });
+  }
+
+// checks if taskRow has deadline content
+  hasItDeadline() {
+    const deadline = this.taskItem.querySelector('.deadline-notice').textContent,
+          boolean = deadline == '' ? false : true;
+    return boolean;
+  }
+
+  attachClearButton() {
+    this.clearDeadline = document.createElement('div');
+    this.clearDeadline.classList.add('clear-deadline-button');
+    this.clearDeadline.textContent = 'clear deadline';
+    this.calendarNode.append(this.clearDeadline);
   }
 }
 
