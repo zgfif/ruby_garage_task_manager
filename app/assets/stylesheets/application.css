@@ -355,6 +355,7 @@
 }
 
 .stop-scrolling {
+  margin-right: var(--with-scrollbar-width);
   height: 100%;
   overflow: hidden;
 }
